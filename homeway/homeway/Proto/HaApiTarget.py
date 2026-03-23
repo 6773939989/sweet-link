@@ -5,3 +5,4 @@
 class HaApiTarget(object):
     None_ = 1
     Core = 2
+    Supervisor = 3
