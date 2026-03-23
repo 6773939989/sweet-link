@@ -127,11 +127,16 @@ class HttpRequest:
     def MakeHttpCall(logger:logging.Logger, pathOrUrl:str, pathOrUrlType:int, method:str, headers:Optional[Dict[str, str]]=None, data:BufferOrNone=None, allowRedirects=False, apiTarget:Optional[int]=None) -> Optional[HttpResult]:
 
         # Handle special API type targets.
-        if apiTarget is not None and apiTarget == HaApiTarget.Core:
+        if apiTarget is not None and (apiTarget == HaApiTarget.Core or apiTarget == HaApiTarget.Supervisor):
             # We need to get the access token and the correct server path, depending on if we are running in the addon container or not.
             serverInfoHandler = Compat.GetServerInfoHandler()
             if serverInfoHandler is None:
                 raise Exception("A HA core api targeted call was made, but we had no server info handler.")
+
+            # If this is a supervisor API call, we need to make sure we have access to the supervisor API before proceeding.
+            if apiTarget == HaApiTarget.Supervisor and not serverInfoHandler.HasSupervisorAccess():
+                # This is a special error code shared with the server to indicate this one specific error.
+                return HttpResult.Error(616, pathOrUrl, False)
 
             # We need to get the access token to talk directly to Home Assistant.
             accessToken = serverInfoHandler.GetAccessToken()
@@ -146,7 +151,7 @@ class HttpRequest:
                 headers["Authorization"] = f"Bearer {accessToken}"
 
                 # Rewrite the path, which is dependent on if we are running in the addon container or standalone.
-                pathOrUrl = serverInfoHandler.GetApiServerBaseUrl("http") + pathOrUrl
+                pathOrUrl = serverInfoHandler.GetApiServerBaseUrl("http", apiTarget) + pathOrUrl
                 pathOrUrlType = PathTypes.Absolute
         else:
             # If this isn't a HA core api call, it's a standard remote access call

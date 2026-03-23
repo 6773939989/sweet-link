@@ -249,12 +249,16 @@ class IServerInfoHandler(ABC):
     # The protocol will automatically be converted to https or wss from the insecure mode as needed, determined by the server config.
     # This only works for API and WS calls, not frontend http calls. When running as an HA addon the http web server is a different path.
     @abstractmethod
-    def GetApiServerBaseUrl(self, protocol:str) -> str:
+    def GetApiServerBaseUrl(self, protocol:str, apiTarget:Optional[int]=None) -> str:
         pass
-
 
     # Returns if this HA server is setup to allow X-Forwarded-For headers.
     # Ideally we want to set them, but if the server doesn't support them, HA will reject requests with a 400.
     @abstractmethod
     def AllowXForwardedForHeader(self) -> bool:
+        pass
+
+    # Returns if this plugin has access to the supervisor API, which is determined by if it's running in the addon container with the right permissions.
+    @abstractmethod
+    def HasSupervisorAccess(self) -> bool:
         pass

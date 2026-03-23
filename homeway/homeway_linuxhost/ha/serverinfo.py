@@ -9,6 +9,7 @@ import requests
 from homeway.compat import Compat
 from homeway.sentry import Sentry
 from homeway.interfaces import IServerInfoHandler
+from homeway.Proto.HaApiTarget import HaApiTarget
 
 # Since ServerInfo is a static class, we need to create a handler for it for the compat class.
 class ServerInfoHandler(IServerInfoHandler):
@@ -28,14 +29,19 @@ class ServerInfoHandler(IServerInfoHandler):
     # Returns the full <protocol>://<host or ip>:<port> depending on how the access token is setup, either in the docker container or running independently.
     # Takes a string that must be "http" or "ws" depending on the desired protocol. This can't be an enum since it's used over the compat handler API.
     # The protocol will automatically be converted to https or wss from the insecure mode as needed, determined by the server config.
-    def GetApiServerBaseUrl(self, protocol: str) -> str:
-        return ServerInfo.GetApiServerBaseUrl(protocol)
+    def GetApiServerBaseUrl(self, protocol: str, apiTarget:Optional[int]=None) -> str:
+        return ServerInfo.GetApiServerBaseUrl(protocol, apiTarget)
 
 
     # Returns if this HA server is setup to allow X-Forwarded-For headers.
     # Ideally we want to set them, but if the server doesn't support them, HA will reject requests with a 400.
     def AllowXForwardedForHeader(self) -> bool:
         return ServerInfo.AllowXForwardedForHeader
+
+
+    # Returns if this plugin has access to the supervisor API, which is determined by if it's running in the addon container with the right permissions.
+    def HasSupervisorAccess(self) -> bool:
+        return ServerInfo.GetAddonDockerSupervisorAccessToken() is not None
 
 
 # A common class for storing the Home Assistant server information
@@ -62,7 +68,7 @@ class ServerInfo:
     # Takes a string that must be "http" or "ws" depending on the desired protocol. This can't be an enum since it's used over the compat handler API.
     # The protocol will automatically be converted to https or wss from the insecure mode as needed, determined by the server config.
     @staticmethod
-    def GetApiServerBaseUrl(p: str) -> str:
+    def GetApiServerBaseUrl(p: str, apiTarget:Optional[int]=None) -> str:
         # If we got an access token from the env, we are running in an addon,
         # so we will use the docker core path. If we are using the docker hostname,
         # We never want to use https, so force it to false.
@@ -84,7 +90,14 @@ class ServerInfo:
         # If we are running in an addon, return the docker hostname core path.
         # No https or port is needed, as it's a local docker hostname.
         if specialAddonSupervisorAccessToken is not None:
+            if apiTarget is not None and apiTarget == HaApiTarget.Supervisor:
+                # Supervisor API calls have a different path.
+                return f"{protocol}://supervisor"
             return f"{protocol}://supervisor/core"
+
+        # If we don't have a specialAddonSupervisorAccessToken and we are targeting the supervisor API, we will fail since it's not possible to access it.
+        if apiTarget is not None and apiTarget == HaApiTarget.Supervisor:
+            raise Exception("We are trying to access the supervisor API, but we have no supervisor access token, which means we are not running in a Home Assistant addon with the right permissions. Supervisor API calls are only possible from within a Home Assistant addon with the right permissions.")
 
         # Otherwise, we are running in a plugin, so return the server ip and port
         return f"{protocol}://{ServerInfo.ServerIpOrHostname}:{ServerInfo.ServerPort}"
