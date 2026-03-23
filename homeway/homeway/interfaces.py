@@ -1,9 +1,12 @@
 from enum import Enum
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 from .buffer import Buffer
 from .httpresult import HttpResult
+
+if TYPE_CHECKING:
+    from .compression import CompressionResult
 
 #
 # Common Objects
@@ -91,6 +94,16 @@ class IAccountLinkStatusUpdateHandler(ABC):
 
 
 class IHomeContext(ABC):
+
+    # Gets the full Sage home context cache as compressed bytes.
+    @abstractmethod
+    def GetSageHomeContext(self) -> Optional["CompressionResult"]:
+        pass
+
+    # Gets the current states and live context for Sage as compressed bytes.
+    @abstractmethod
+    def GetStatesAndLiveContext(self) -> Tuple[Optional["CompressionResult"], Optional["CompressionResult"]]:
+        pass
 
     # Gets the full device and entity tree stored in our cache.
     @abstractmethod

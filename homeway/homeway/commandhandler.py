@@ -181,6 +181,20 @@ class CommandHandler:
             successful = allEntities is not None
             return CommandResponse.Success({"Success": successful, "Floors": allEntities})
 
+        # Used by Sage and MCP to get the current home context and live state in a single round trip.
+        if commandPathLower.startswith("get-live-context"):
+            if self.HomeContext is None:
+                return CommandResponse.Error(CommandHandler.c_CommandError_ExecutionFailure, "No home context.")
+            homeContext = self.HomeContext.GetSageHomeContext()
+            states, liveContext = self.HomeContext.GetStatesAndLiveContext()
+            successful = homeContext is not None and states is not None and liveContext is not None
+            return CommandResponse.Success({
+                "Success": successful,
+                "HomeContext": self._SerializeCompressionResult(homeContext),
+                "States": self._SerializeCompressionResult(states),
+                "LiveContext": self._SerializeCompressionResult(liveContext),
+            })
+
         # Unknown command
         return CommandResponse.Error(CommandHandler.c_CommandError_UnknownCommand, "The command path didn't match any known commands.")
 
@@ -355,6 +369,17 @@ class CommandHandler:
                     results.append({"Error":"Failed to execute"})
 
         return CommandResponse.Success({"Responses":results})
+
+
+    def _SerializeCompressionResult(self, compressionResult:Optional[Any]) -> Optional[Dict[str, Any]]:
+        if compressionResult is None:
+            return None
+
+        return {
+            "Data": base64.b64encode(compressionResult.Bytes.GetBytesLike()).decode(encoding="utf-8"),
+            "CompressionType": int(compressionResult.CompressionType),
+            "UncompressedSize": int(compressionResult.UncompressedSize),
+        }
 
 
     # A helper to parse the context and json args. Throws if it fails!
