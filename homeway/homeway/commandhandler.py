@@ -131,10 +131,15 @@ class CommandHandler:
                 return CommandResponse.Error(CommandHandler.c_CommandError_ArgParseFailure, "No arguments provided.")
             if self.HaWebSocketCon is None:
                 return CommandResponse.Error(CommandHandler.c_CommandError_ExecutionFailure, "No Home Assistant WebSocket connection.")
-            haVersion = self.HaWebSocketCon.GetHomeAssistantVersionString()
-            result = self.HaWebSocketCon.SendAndReceiveMsg(jsonObj_CanBeNone)
-            successful = result is not None
-            return CommandResponse.Success({"Success": successful, "HaVersion": haVersion, "Result": result})
+            return CommandResponse.Success(self._InvokeHaWebsocketApiCall(jsonObj_CanBeNone))
+
+        # Can be used to make multiple Home Assistant WebSocket API calls in a single command.
+        if commandPathLower.startswith("batch-ha-websocket-api-call"):
+            if jsonObj_CanBeNone is None:
+                return CommandResponse.Error(CommandHandler.c_CommandError_ArgParseFailure, "No arguments provided.")
+            if self.HaWebSocketCon is None:
+                return CommandResponse.Error(CommandHandler.c_CommandError_ExecutionFailure, "No Home Assistant WebSocket connection.")
+            return self.HandleBatchHaWebsocketApiCallCommand(jsonObj_CanBeNone)
 
         # Returns the Home Assistant version string, if known.
         if commandPathLower.startswith("get-ha-version"):
@@ -369,6 +374,64 @@ class CommandHandler:
                     results.append({"Error":"Failed to execute"})
 
         return CommandResponse.Success({"Responses":results})
+
+
+    # Important! This must return the results in the same order as the requests!
+    def HandleBatchHaWebsocketApiCallCommand(self, jsonArgs:Dict[str, Any]) -> CommandResponse:
+
+        # Get the command list
+        requestList:Optional[List[Dict[str, Any]]] = jsonArgs.get("Requests", None)
+        if requestList is None:
+            return CommandResponse.Error(CommandHandler.c_CommandError_ArgParseFailure, "No 'Requests' list provided.")
+        if not isinstance(requestList, list):
+            return CommandResponse.Error(CommandHandler.c_CommandError_ArgParseFailure, "'Requests' is not a list.")
+
+        def _InvokeWsApi(request:Dict[str, Any]) -> Dict[str, Any]:
+            start = time.time()
+            result:Dict[str, Any] = {}
+            try:
+                if not isinstance(request, dict):
+                    raise Exception("Request is not a dictionary.")
+
+                # Get the full Home Assistant WebSocket message object
+                requestMsg:Optional[Dict[str, Any]] = request.get("Message", None)
+                if requestMsg is None:
+                    raise Exception("No 'Message' provided in request.")
+                if not isinstance(requestMsg, dict):
+                    raise Exception("'Message' is not a dictionary.")
+
+                # Execute the request and get the result.
+                result.update(self._InvokeHaWebsocketApiCall(requestMsg))
+            except Exception as e:
+                self.Logger.error(f"HandleBatchHaWebsocketApiCallCommand Exception from command: {e}")
+                result["Error"] = "Exception in making websocket API request."
+            result["DurationMs"] = int((time.time()-start) * 1000)
+            return result
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as pool:
+            futureList = {pool.submit(_InvokeWsApi, request): request for request in requestList}
+
+            # Wait for each task to complete in the order they were submitted, to ensure the results are in the same order as the requests.
+            results:List[Dict[str, Any]] = []
+            for future in futureList:
+                try:
+                    results.append(future.result(60*2))
+                except Exception as e:
+                    self.Logger.error(f"HandleBatchHaWebsocketApiCallCommand Exception from future: {e}")
+                    results.append({"Error":"Failed to execute"})
+
+        # Return the results.
+        return CommandResponse.Success({"Responses":results})
+
+
+    def _InvokeHaWebsocketApiCall(self, msg:Dict[str, Any]) -> Dict[str, Any]:
+        if self.HaWebSocketCon is None:
+            raise Exception("No Home Assistant WebSocket connection.")
+
+        haVersion = self.HaWebSocketCon.GetHomeAssistantVersionString()
+        result = self.HaWebSocketCon.SendAndReceiveMsg(dict(msg))
+        successful = result is not None
+        return {"Success": successful, "HaVersion": haVersion, "Result": result}
 
 
     def _SerializeCompressionResult(self, compressionResult:Optional[Any]) -> Optional[Dict[str, Any]]:
