@@ -70,7 +70,7 @@ jobs:
           pip install pylint
           pip install pyright
           pip install ruff
-          pip install -r ./homeway/requirements.txt
+          pip install -r ./sweetplace/requirements.txt
           pip install "zstandard>=0.21.0,<0.23.0"
       # This crazy script is needed to ensure that we always run pylint
       # on all of the files in the repo and the path is set correctly for it to work.

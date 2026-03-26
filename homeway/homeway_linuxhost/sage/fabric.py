@@ -1,3 +1,4 @@
+import os
 import time
 import random
 import logging
@@ -12,7 +13,7 @@ from homeway.pingpong import PingPong
 
 from .interfaces import IFiberManager
 
-# Manages the Sage Fabric connection with the Homeway service.
+# Manages the Sage Fabric connection with the Sweetplace service.
 class Fabric:
 
     # For debugging, it's too chatty to enable always.
@@ -157,7 +158,7 @@ class Fabric:
                         subdomain = lowestLatencySub
 
                 # Build the full URL, allow the dev config to override it.
-                uri = f"wss://{subdomain}.homeway.io/sage-fabric-websocket"
+                uri = f"wss://{subdomain}.{os.environ.get('HOMEWAY_DOMAIN', 'sweetplace.me')}/sage-fabric-websocket"
                 if self.DevLocalHomewayServerAddress is not None and len(self.DevLocalHomewayServerAddress) > 0:
                     self.Logger.info(f"{self._getLogTag()} Using dev local server address [{self.DevLocalHomewayServerAddress}]")
                     uri = f"ws://{self.DevLocalHomewayServerAddress}/sage-fabric-websocket"

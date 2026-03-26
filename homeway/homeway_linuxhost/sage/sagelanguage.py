@@ -137,7 +137,7 @@ class SageLanguage:
                 return False
             pipelines = response.get("result", {}).get("pipelines", [])
             for pipeline in pipelines:
-                # Look for a Homeway TTS pipeline.
+                # Look for a Sweetplace TTS pipeline.
                 # The tts_engine will be null if it's not be setup by the user yet.
                 engine = pipeline.get("tts_engine", None)
                 if engine is not None:
@@ -157,7 +157,7 @@ class SageLanguage:
                     return True
 
             # This is fine, for any user who hasn't setup sage.
-            self.Logger.info("No Homeway TTS pipeline found in Home Assistant.")
+            self.Logger.info("No Sweetplace TTS pipeline found in Home Assistant.")
             # DONT'T return False so we don't keep retrying.
             return True
         except Exception as e:

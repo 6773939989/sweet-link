@@ -1,3 +1,4 @@
+import os
 import random
 import string
 from typing import Optional
@@ -14,7 +15,7 @@ class HostCommon:
     c_PrivateKeyLength = 80
 
     # The url for the add plugin process.
-    c_AddPluginUrl = "https://homeway.io/getstarted"
+    c_AddPluginUrl = "https://sweetplace.me/getstarted"
 
 
     # Returns a new plugin Id. This needs to be crypo-random to make sure it's not predictable.
@@ -50,4 +51,4 @@ class HostCommon:
             subdomain = "starport-v1"
         if fullHostString is not None:
             return f"{fullHostString}/PluginWebsocketConnection"
-        return f"wss://{subdomain}.homeway.io/PluginWebsocketConnection"
+        return f"wss://{subdomain}.{os.environ.get('HOMEWAY_DOMAIN', 'sweetplace.me')}/PluginWebsocketConnection"

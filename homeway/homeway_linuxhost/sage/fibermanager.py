@@ -1,3 +1,4 @@
+import os
 import sys
 import json
 import logging
@@ -689,7 +690,7 @@ class FiberManager(IFiberManager):
     # Some status codes we want to map and then send a message to the user.
     # Returns None if there's no error to map.
     def _MapErrorStatusCodeToUserStr(self, statusCode:int) -> Optional[str]:
-        linkErrorMessage = "You must link your Homeway addon with your Homeway account before using Sage! https://homeway.io/s/link"
+        linkErrorMessage = "You must link your Sweetplace addon with your Sweetplace account before using Sage! https://sweetplace.me/s/link"
         if statusCode is None:
             return None
         if statusCode == 401:

@@ -12,8 +12,8 @@ There are a few ways to dev the app, depending on what you're trying to do. They
 
 ## Dev In Companion Mode On A Separate Linux Host
 
-1) Install the Homeway App in companion mode and connect it to HA as normal.
-2) Use VS Code to SSH into the host, setup the homeway github repo as the root, us F5 debugging to run the companion.
+1) Install the Sweetplace App in companion mode and connect it to HA as normal.
+2) Use VS Code to SSH into the host, setup the sweetplace github repo as the root, us F5 debugging to run the companion.
 
 
 ## Dev In A Local In A Home Assistant Container
@@ -32,7 +32,7 @@ If any of this fails, try pulling the new devcontainer.json and task.json files 
 - Important!
   - You must comment out the `image:` var in the addon config or it will pull the image instead of using local code.
   - If you forget, comment it out, bump the version number, and force an addon update check. Wait until the version number in the HA ui changes.
-- In Home Assistant, go to the addons, select install, and you will see Homeway listed as local.
+- In Home Assistant, go to the addons, select install, and you will see Sweetplace listed as local.
 - To update after making changes:
   - Go the addon page in HA
   - Stop the addon
@@ -43,7 +43,7 @@ If any of this fails, try pulling the new devcontainer.json and task.json files 
 ## Dev In A Local HA Server
 
 - Setup Samaba on the HA Server
-- Copy the Homeway folder into the add-ons root
+- Copy the Sweetplace folder into the add-ons root
 - Update the config.yaml
   - Name, slug, ingress_port, comment out the docker image, bump the version
 - Go to HA -> Apps -> Install

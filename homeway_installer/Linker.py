@@ -20,7 +20,7 @@ class Linker:
         # First, wait for the config file to be created and the addon ID to show up.
         addonId:Optional[str] = None
         startTimeSec = time.time()
-        Logger.Info("Waiting for the Homeway add-on to produce an add-on id... (this can take a few seconds)")
+        Logger.Info("Waiting for the Sweetplace add-on to produce an add-on id... (this can take a few seconds)")
         while addonId is None:
             # Give the service time to start.
             time.sleep(0.1)
@@ -39,7 +39,7 @@ class Linker:
                     # Handle the error and cleanup.
                     Logger.Blank()
                     Logger.Blank()
-                    Logger.Error("We didn't get a response from the Homeway add-on service when waiting for the add-on id.")
+                    Logger.Error("We didn't get a response from the Sweetplace add-on service when waiting for the add-on id.")
                     Logger.Error("You can find service logs which might indicate the error in: "+context.LogFolder)
                     Logger.Blank()
                     Logger.Blank()
@@ -52,14 +52,14 @@ class Linker:
         # If so, report and we don't need to do the setup.
         (isConnectedToService, addonNameIfConnectedToAccount) = self._IsAddonConnectedToAnAccount(addonId)
         if isConnectedToService and addonNameIfConnectedToAccount is not None:
-            Logger.Header("This add-on is securely connected to your Homeway account as '"+str(addonNameIfConnectedToAccount)+"'")
+            Logger.Header("This add-on is securely connected to your Sweetplace account as '"+str(addonNameIfConnectedToAccount)+"'")
             return
 
         # The addon isn't connected to an account.
         # If this is not the first time setup, ask the user if they want to do it now.
         if context.ExistingAddonId is not None:
             Logger.Blank()
-            Logger.Warn("This add-on isn't connected to a Homeway account.")
+            Logger.Warn("This add-on isn't connected to a Sweetplace account.")
             if Util.AskYesOrNoQuestion("Would you like to link it now?") is False:
                 Logger.Blank()
                 Logger.Header("You can connect this add-on anytime, using this URL: ")
@@ -143,21 +143,21 @@ class Linker:
         try:
             # Try to get a short code. We do a quick timeout so if this fails, we just present the user the longer URL.
             # Any failures, like rate limiting, server error, whatever, and we just use the long URL.
-            r = requests.post('https://homeway.io/api/shortcode/create', json={"Type": 1, "PluginId": addonId}, timeout=10.0)
+            r = requests.post(os.environ.get("HOMEWAY_URL", "https://sweetplace.me") + "/api/shortcode/create", json={"Type": 1, "PluginId": addonId}, timeout=10.0)
             if r.status_code == 200:
                 jsonResponse = r.json()
                 if "Result" in jsonResponse and "Code" in jsonResponse["Result"]:
                     codeStr = jsonResponse["Result"]["Code"]
                     if len(codeStr) > 0:
-                        Logger.Warn("To securely link this add-on to your Homeway account, go to the following website and use the code.")
+                        Logger.Warn("To securely link this add-on to your Sweetplace account, go to the following website and use the code.")
                         Logger.Blank()
-                        Logger.Header("Website: https://homeway.io/code")
+                        Logger.Header("Website: https://sweetplace.me/code")
                         Logger.Header("Code:    "+codeStr)
                         return
         except Exception:
             pass
 
-        Logger.Warn("Use this URL to securely link this add-on to your Homeway account:")
+        Logger.Warn("Use this URL to securely link this add-on to your Sweetplace account:")
         Logger.Header(self._GetAddAddonUrl(addonId))
 
 
@@ -173,7 +173,7 @@ class Linker:
 
         # If the file exists, try to read it.
         # If this fails, let it throw, so the user knows something is wrong.
-        Logger.Debug("Found existing Homeway service secrets config.")
+        Logger.Debug("Found existing Sweetplace service secrets config.")
         try:
             config = configparser.ConfigParser(allow_no_value=True, strict=False)
             config.read(addonServiceConfigFilePath)
@@ -193,10 +193,10 @@ class Linker:
 
         # Try to find the values.
         if config.has_section(Secrets.SecretsSection) is False:
-            Logger.Debug("Server section not found in Homeway config.")
+            Logger.Debug("Server section not found in Sweetplace config.")
             return None
         if Secrets.PluginIdKey not in config[Secrets.SecretsSection].keys():
-            Logger.Debug("Addon id not found in Homeway config.")
+            Logger.Debug("Addon id not found in Sweetplace config.")
             return None
         addonId = config[Secrets.SecretsSection][Secrets.PluginIdKey]
         if len(addonId) < HostCommon.c_PluginIdMaxLength:
@@ -221,7 +221,7 @@ class Linker:
                     return (False, None)
 
                 # Query the addonId status.
-                r = requests.post('https://homeway.io/api/plugin/info', json={"Id": addonId}, timeout=20)
+                r = requests.post(os.environ.get("HOMEWAY_URL", "https://sweetplace.me") + "/api/plugin/info", json={"Id": addonId}, timeout=20)
 
                 Logger.Debug("Homeway Addon info API Result: "+str(r.status_code))
                 # If the status code is above 500, retry.
@@ -247,4 +247,4 @@ class Linker:
 
 
     def _GetAddAddonUrl(self, addonId:str) -> str:
-        return "https://homeway.io/getstarted?id="+addonId
+        return "https://sweetplace.me/getstarted?id="+addonId

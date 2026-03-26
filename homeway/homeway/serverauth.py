@@ -9,12 +9,12 @@ from .sentry import Sentry
 
 # A helper class to handle server validation.
 #
-# The plugin connection to Homeway is established over a secure websocket using the latest TLS protocols and policies.
-# However, since Homeway handles very sensitive access to physical LAN devices, we want to make sure the connection is incredibly secure.
+# The plugin connection to Sweetplace is established over a secure websocket using the latest TLS protocols and policies.
+# However, since Sweetplace handles very sensitive access to physical LAN devices, we want to make sure the connection is incredibly secure.
 # No bad actor should ever be able to generate a valid SSL cert for Homeway. But it would be possible to add a bad root cert to the
 # device and then generate certs based on it.
 #
-# Thus to add another layer of security, we will validate the secure websocket connection is connected to a valid Homeway server by also
+# Thus to add another layer of security, we will validate the secure websocket connection is connected to a valid Sweetplace server by also
 # doing an RSA challenge. We encrypt a random string the client generates with a public key and send it to the server. The server will use it's private key
 # to decrypt it and send the plain text challenge back (over the secure websocket). If the server can successfully decrypt our message, it knows the correct private
 # key and thus can be trusted.

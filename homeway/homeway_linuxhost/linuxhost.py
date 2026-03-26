@@ -72,7 +72,7 @@ class LinuxHost(IStateChangeHandler):
         # Do all of this in a try catch, so we can log any issues before exiting
         try:
             self.Logger.info("##################################")
-            self.Logger.info("#### Homeway Plugin Starting #####")
+            self.Logger.info("#### Sweetplace Plugin Starting #####")
             self.Logger.info("##################################")
 
             # Find the version of the plugin, this is required and it will throw if it fails.
@@ -210,7 +210,7 @@ class LinuxHost(IStateChangeHandler):
         # Allow the loggers to flush before we exit
         try:
             self.Logger.info("##################################")
-            self.Logger.info("#### Homeway Exiting ######")
+            self.Logger.info("#### Sweetplace Exiting ######")
             self.Logger.info("##################################")
             logging.shutdown()
         except Exception as e:
@@ -272,10 +272,10 @@ class LinuxHost(IStateChangeHandler):
 
 
     #
-    # StatusChangeHandler Interface - Called by the Homeway logic when the server connection has been established.
+    # StatusChangeHandler Interface - Called by the Sweetplace logic when the server connection has been established.
     #
     def OnPrimaryConnectionEstablished(self, apiKey:str, connectedAccounts:List[str]) -> None:
-        self.Logger.info("Primary Connection To Homeway Established - We Are Ready To Go!")
+        self.Logger.info("Primary Connection To Sweetplace Established - We Are Ready To Go!")
 
         # Ensure we have a valid plugin id
         pluginId = self.GetPluginId()
@@ -313,7 +313,7 @@ class LinuxHost(IStateChangeHandler):
 
 
     #
-    # StatusChangeHandler Interface - Called by the Homeway logic when a plugin update is required for this client.
+    # StatusChangeHandler Interface - Called by the Sweetplace logic when a plugin update is required for this client.
     #
     def OnPluginUpdateRequired(self):
         self.Logger.error("!!! A Plugin Update Is Required -- If This Plugin Isn't Updated It Might Stop Working !!!")

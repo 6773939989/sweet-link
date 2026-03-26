@@ -1,3 +1,4 @@
+import os
 import logging
 import threading
 from typing import Any, Dict, Optional
@@ -8,7 +9,7 @@ from .httpsessions import HttpSessions
 class Telemetry:
 
     Logger:logging.Logger = None #pyright: ignore[reportAssignmentType]
-    ServerProtocolAndDomain = "https://homeway.io"
+    ServerProtocolAndDomain = os.environ.get("HOMEWAY_URL", "https://sweetplace.me")
 
 
     @staticmethod

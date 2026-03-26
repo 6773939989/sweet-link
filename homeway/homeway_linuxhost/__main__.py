@@ -62,7 +62,7 @@ def _GetConfigVarAndValidate(jsonConfig:Dict[str, Any],
 #
 def _PrintErrorAndExit(msg:str):
     print(f"\r\nPlugin Init Error - {msg}", file=sys.stderr)
-    print( "\r\nPlease contact support so we can fix this for you! support@homeway.io", file=sys.stderr)
+    print( "\r\nPlease contact support so we can fix this for you! support@sweetplace.me", file=sys.stderr)
     sys.exit(1)
 
 

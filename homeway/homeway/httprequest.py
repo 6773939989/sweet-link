@@ -1,3 +1,4 @@
+import os
 import platform
 import logging
 from typing import Dict, Optional
@@ -159,7 +160,7 @@ class HttpRequest:
             if not HttpRequest.RemoteAccessEnabled:
                 logger.warning("Remote access is disabled, refusing to make the requested HTTP call.")
                 # Disable redirect correction, so we don't get corrected back to this addon subdomain.
-                return HttpResult.Redirect("https://homeway.io/?errorType=remoteAccessDisabled", False)
+                return HttpResult.Redirect("https://sweetplace.me/?errorType=remoteAccessDisabled", False)
 
 
         # Next we need to figure out what the URL is. There are two options
@@ -167,14 +168,14 @@ class HttpRequest:
         # 1) Absolute URLs
         # These are the easiest, because we just want to make a request to exactly what the absolute URL is. These are used
         # when the local service is trying to make an local LAN http request to the same device or even a different device.
-        # For these to work properly on a remote browser, the Homeway service will detect and convert the URLs in to encoded relative
+        # For these to work properly on a remote browser, the Sweetplace service will detect and convert the URLs in to encoded relative
         # URLs for the portal. This ensures when the remote browser tries to access the HTTP endpoint, it will hit Homeway. The Homeway
         # server detects the special relative URL, decodes the absolute URL, and sends that in the Message as "AbsUrl". For these URLs we just try
         # to hit them and we take whatever we get, we don't care if fails or not.
         #
         # 2) Relative Urls
         # These Urls are the most common, standard URLs. The browser makes the relative requests to the same hostname:port as it's currently
-        # on. However, for our setup its a little more complex. The issue is the Homeway plugin not knowing how the user's system is setup.
+        # on. However, for our setup its a little more complex. The issue is the Sweetplace plugin not knowing how the user's system is setup.
         # The plugin can with 100% certainty query and know the port local http server is running on directly. So we do that to know exactly what
         # local server to talk to. (consider there might be multiple instances running on one device.)
         #

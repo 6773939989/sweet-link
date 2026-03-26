@@ -15,7 +15,7 @@ class LocalIpHelper:
 
     # This returns the local IP address of the connection target.
     # If this is a plugin running on the same device, it should be the device IP.
-    # If this a companion plugin, it should be the IP of the main Homeway device.
+    # If this a companion plugin, it should be the IP of the main Sweetplace device.
     @staticmethod
     def TryToGetLocalIpOfConnectionTarget() -> str:
         # If there is an override, we use that.

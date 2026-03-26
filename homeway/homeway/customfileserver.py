@@ -1,3 +1,4 @@
+import os
 import logging
 import hashlib
 from typing import Dict, Optional
@@ -39,7 +40,7 @@ class CustomFileServer:
         self.HomewayCssFileContentsBytes:Optional[bytes] = None
 
 
-    # This is called once we are connected to Homeway and we know the addon id and api key.
+    # This is called once we are connected to Sweetplace and we know the addon id and api key.
     # NOTE that this API key IS NOT a secret, so it's fine to put it in the JS file.
     def UpdateAddonConfig(self, addonId:str, apiKey:str) -> None:
         try:
@@ -52,11 +53,11 @@ class CustomFileServer:
             addonApiKeyTag = "{{{AddonApi}}}"
             addonIdPos = customConfigFile.find(addonIdTag)
             if addonIdPos == -1:
-                self.Logger.error(f"Failed to find {addonIdTag} in Homeway custom js file.")
+                self.Logger.error(f"Failed to find {addonIdTag} in Sweetplace custom js file.")
                 return
             addonApiKeyPos = customConfigFile.find(addonApiKeyTag)
             if addonApiKeyPos == -1:
-                self.Logger.error(f"Failed to find {addonApiKeyTag} in Homeway custom js file.")
+                self.Logger.error(f"Failed to find {addonApiKeyTag} in Sweetplace custom js file.")
                 return
             customConfigFile = customConfigFile.replace(addonIdTag, addonId)
             customConfigFile = customConfigFile.replace(addonApiKeyTag, apiKey)
@@ -80,7 +81,7 @@ class CustomFileServer:
         return self.HomewayCustomHtmlHeaderIncludeBytes
 
 
-    # Returns True or False depending if this request is for a custom Homeway file or not.
+    # Returns True or False depending if this request is for a custom Sweetplace file or not.
     # If True is returned, HandleRequest should be used to get the response.
     def IsCustomFileRequest(self, httpInitialContext:HttpInitialContext, method:str) -> bool:
         try:
@@ -222,7 +223,7 @@ class CustomFileServer:
     _HomewayJsFileContents = """
 
 //
-// Homeway Addon Data Check
+// Sweetplace Addon Data Check
 //
 // This helper script is only added when Home Assistant is loaded via Homeway.
 //
@@ -439,7 +440,7 @@ hw_do_load = function()
             "CheckDueToVisChange": isUpdateDueToVisibilityChange
         };
         hw_log("Starting data check")
-        fetch("https://homeway.io/api/plugin-frontend/checkdatausage",
+        fetch(os.environ.get("HOMEWAY_URL", "https://sweetplace.me") + "/api/plugin-frontend/checkdatausage",
         {
             credentials: "omit",
             method: "POST",
@@ -471,7 +472,7 @@ hw_do_load = function()
                 {
                     hw_log("User is out of data, redirecting.")
                     // Redirect the page, since it's broken as is.
-                    window.location.href = "https://homeway.io/datalimitreached?source=plugin-out-of-data";
+                    window.location.href = "https://sweetplace.me/datalimitreached?source=plugin-out-of-data";
                     return;
                 }
 

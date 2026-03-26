@@ -123,7 +123,7 @@ class ConfigManager(IConfigManager):
         return None
 
 
-    # Adds the Homeway required config settings if needed.
+    # Adds the Sweetplace required config settings if needed.
     def UpdateConfigIfNeeded(self) -> None:
         try:
             # Ensure we can find the config file.
@@ -176,7 +176,7 @@ class ConfigManager(IConfigManager):
         linesToAppend.append(lineEnding)
 
         if foundAlexaConfig is False:
-            linesToAppend.append("# Added By Homeway to enable Alexa support."+lineEnding)
+            linesToAppend.append("# Added By Sweetplace to enable Alexa support."+lineEnding)
             linesToAppend.append("alexa:"+lineEnding)
             linesToAppend.append("  smart_home:"+lineEnding)
 
@@ -184,12 +184,12 @@ class ConfigManager(IConfigManager):
             # If we added the alexa config, add a new line to separate them.
             if foundAlexaConfig is False:
                 linesToAppend.append(lineEnding)
-            linesToAppend.append("# Added By Homeway to enable Google Assistant support."+lineEnding)
+            linesToAppend.append("# Added By Sweetplace to enable Google Assistant support."+lineEnding)
             linesToAppend.append("google_assistant:"+lineEnding)
             linesToAppend.append("  project_id: homewayio"+lineEnding)
             linesToAppend.append("  service_account:"+lineEnding)
             linesToAppend.append("    private_key: \"nokey\""+lineEnding)
-            linesToAppend.append("    client_email: \"support@homeway.io\""+lineEnding)
+            linesToAppend.append("    client_email: \"support@sweetplace.me\""+lineEnding)
 
         # Add a new line to the end
         linesToAppend.append(lineEnding)
@@ -232,7 +232,7 @@ class ConfigManager(IConfigManager):
             # If safest to just append it to the end of the file.
             with open(configFilePath, 'a', encoding="utf-8") as f:
                 f.writelines(lineEnding)
-                f.writelines("# Added By Homeway to enable proper HTTP proxy support."+lineEnding)
+                f.writelines("# Added By Sweetplace to enable proper HTTP proxy support."+lineEnding)
                 f.writelines("http:"+lineEnding)
                 f.writelines("  use_x_forwarded_for: true"+lineEnding)
                 f.writelines("  trusted_proxies:"+lineEnding)

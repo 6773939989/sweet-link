@@ -1,3 +1,4 @@
+import os
 import json
 import time
 import logging
@@ -321,10 +322,10 @@ class WebServer(IAccountLinkStatusUpdateHandler):
         <div style="display: flex; justify-content: center; margin-bottom: 20px;">
             <div style="display: flex; flex-direction: column; align-items: center;">
                 <!-- Important! Set the height so the page doesn't shift when the image loads on the refresh loop -->
-                <img src="https://homeway.io/img/logo_maskable.png" height="70" width="70" style="width: 70px; height: 70px;    border-radius: 10px">
+                <img src="https://sweetplace.me/img/logo_maskable.png" height="70" width="70" style="width: 70px; height: 70px;    border-radius: 10px">
                 <div style="display: flex; justify-content: center; font-size: 28px; margin-bottom:10px; margin-top:10px">
                     <!-- this must target open blank or it won't open properly! -->
-                    <a href="https://homeway.io/dashboard?ha=1&source=addon_web_ui_link" target="_blank" class="whiteLink">Homeway</a>
+                    <a href="https://sweetplace.me/dashboard?ha=1&source=addon_web_ui_link" target="_blank" class="whiteLink">Homeway</a>
                 </div>
             </div>
         </div>
@@ -333,7 +334,7 @@ class WebServer(IAccountLinkStatusUpdateHandler):
             <div style="display: flex; justify-content: center; align-items: baseline; margin-bottom:5px;">
                 <div style="width:10px; height:10px; background-color:#bcdf5c; border-radius:50%; margin-right:5px;"></div>
                 <div style="margin-bottom:5px; text-align: center; color:#c0dd72; font-weight: bold;">
-                    Connecting To Homeway.io...
+                    Connecting To Sweetplace.me...
                 </div>
             </div>
         </div>
@@ -345,7 +346,7 @@ class WebServer(IAccountLinkStatusUpdateHandler):
                 </div>
             </div>
             <div style="margin-bottom:8px; text-align: center;">
-                <b>This addon isn't linked to a Homeway account.</b>
+                <b>This addon isn't linked to a Sweetplace account.</b>
             </div>
             <div style="margin-bottom:10px; text-align: center;">
                 Use the button below to finish the addon setup.
@@ -366,14 +367,14 @@ class WebServer(IAccountLinkStatusUpdateHandler):
 
             <div style="margin-bottom:30px; text-align: center;" class="subtleText">
                 <!-- this must target open blank or it won't open properly! -->
-                Visit <a href="https://homeway.io/dashboard?ha=1&source=addon_web_ui_link" target="_blank" class="blueLink">Homeway.io</a> for secure and private remote access.
+                Visit <a href="https://sweetplace.me/dashboard?ha=1&source=addon_web_ui_link" target="_blank" class="blueLink">Sweetplace.me</a> for secure and private remote access.
             </div>
 
             <div class="featureHolder">
                <div style="display: flex; flex-direction: row; justify-content: space-between; align-items: center;">
                     <div>
                         <div class="featureHeader">Enable Remote Access</div>
-                        <div class="featureDetails">Disabling remote access still allows Sage, Google Home, &amp; Alexa, and other Homeway features to work.</div>
+                        <div class="featureDetails">Disabling remote access still allows Sage, Google Home, &amp; Alexa, and other Sweetplace features to work.</div>
                     </div>
                     <div style="padding-right:10px">
                         <label class="switch switchClass" >
@@ -453,7 +454,7 @@ class WebServer(IAccountLinkStatusUpdateHandler):
                     </div>
                 </div>
                 <div class="pinkButton featureButton" id="goToDashboardButton">
-                    Go To Your Homeway Dashboard
+                    Go To Your Sweetplace Dashboard
                 </div>
             </div>
         </div>
@@ -463,12 +464,12 @@ class WebServer(IAccountLinkStatusUpdateHandler):
     // Wait for the document to be ready.
     (function() {
         document.getElementById("linkAccountButton").onclick = (event) => { window.open('"""+pluginLinkUrl+"""', '_blank').focus(); };
-        document.getElementById("goToDashboardButton").onclick = (event) => { window.open("https://homeway.io/dashboard?source=addon_control", '_blank').focus(); };
-        document.getElementById("goToAssistantSetup").onclick = (event) => { window.open("https://homeway.io/assistant?source=addon_control", '_blank').focus(); };
-        document.getElementById("goToAssistantDeviceControl").onclick = (event) => { window.open("https://homeway.io/assistantdevicecontrol?source=addon_control", '_blank').focus(); };
-        document.getElementById("goToSageSetup").onclick = (event) => { window.open("https://homeway.io/sage?source=addon_control", '_blank').focus(); };
-        document.getElementById("goToAppSetup").onclick = (event) => { window.open("https://homeway.io/app?source=addon_control", '_blank').focus(); };
-        document.getElementById("goToLocalAccessSetup").onclick = (event) => { window.open("https://homeway.io/localaccess?source=addon_control", '_blank').focus(); };
+        document.getElementById("goToDashboardButton").onclick = (event) => { window.open("https://sweetplace.me/dashboard?source=addon_control", '_blank').focus(); };
+        document.getElementById("goToAssistantSetup").onclick = (event) => { window.open("https://sweetplace.me/assistant?source=addon_control", '_blank').focus(); };
+        document.getElementById("goToAssistantDeviceControl").onclick = (event) => { window.open("https://sweetplace.me/assistantdevicecontrol?source=addon_control", '_blank').focus(); };
+        document.getElementById("goToSageSetup").onclick = (event) => { window.open("https://sweetplace.me/sage?source=addon_control", '_blank').focus(); };
+        document.getElementById("goToAppSetup").onclick = (event) => { window.open("https://sweetplace.me/app?source=addon_control", '_blank').focus(); };
+        document.getElementById("goToLocalAccessSetup").onclick = (event) => { window.open("https://sweetplace.me/localaccess?source=addon_control", '_blank').focus(); };
         const remoteSwitch = document.getElementById('enable-remote-access-switch');
         remoteSwitch.onchange = (event) => {
             const enabled = remoteSwitch.checked;

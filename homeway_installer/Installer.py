@@ -1,3 +1,4 @@
+import os
 import sys
 import traceback
 from typing import Optional
@@ -29,7 +30,7 @@ class Installer:
             Logger.Error(str(tb))
             Logger.Blank()
             Logger.Blank()
-            Logger.Header("Please contact our support team directly at support@homeway.io so we can help you fix this issue!")
+            Logger.Header("Please contact our support team directly at support@sweetplace.me so we can help you fix this issue!")
             Logger.Blank()
             Logger.Blank()
 
@@ -131,8 +132,8 @@ class Installer:
         # Success!
         Logger.Blank()
         Logger.Blank()
-        Logger.Purple("              ~~~ Homeway Setup Complete ~~~    ")
-        Logger.Warn(  "  You can access your Home Assistant anytime from Homeway.io")
+        Logger.Purple("              ~~~ Sweetplace Setup Complete ~~~    ")
+        Logger.Warn(  "  You can access your Home Assistant anytime from Sweetplace.me")
         Logger.Header("                 Welcome To Our Community")
         Logger.Error( "                           <3")
         Logger.Blank()
@@ -160,12 +161,12 @@ class Installer:
         Logger.Blank()
         Logger.Blank()
         Logger.Header("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-        Logger.Header("           Homeway Addon            ")
+        Logger.Header("           Sweetplace Addon            ")
         Logger.Header("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
         Logger.Blank()
-        Logger.Info("This installer script is used for installing the Homeway addon for Home Assistant installs that don't support HA addons.")
-        Logger.Info("If your Home Assistant supports addons directly, install our Homeway addon instead.")
-        Logger.Info("https://homeway.io/getstarted")
+        Logger.Info("This installer script is used for installing the Sweetplace addon for Home Assistant installs that don't support HA addons.")
+        Logger.Info("If your Home Assistant supports addons directly, install our Sweetplace addon instead.")
+        Logger.Info("https://sweetplace.me/getstarted")
         Logger.Blank()
         Logger.Blank()
         Logger.Warn("Optional Args:")
@@ -173,6 +174,6 @@ class Installer:
         Logger.Info("  -debug           - Enable debug logging to the console.")
         Logger.Info("  -skipsudoactions - Skips sudo required actions. This is useful for debugging, but will make the install not fully work.")
         Logger.Blank()
-        Logger.Info("If you need help, contact our support team at support@homeway.io")
+        Logger.Info("If you need help, contact our support team at support@sweetplace.me")
         Logger.Blank()
         Logger.Blank()
