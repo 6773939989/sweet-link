@@ -324,9 +324,26 @@ class LinuxHost(IStateChangeHandler):
         def _ReportToSweetplaceDB():
             try:
                 import uuid, requests, json, os, time
-                mac_num = hex(uuid.getnode()).replace('0x', '').upper()
-                mac = ':'.join(mac_num[i : i + 2] for i in range(0, 11, 2)).zfill(17)
                 
+                macs = []
+                # Hardware Physical MAC Scan
+                if os.path.exists('/sys/class/net/'):
+                    for interface in os.listdir('/sys/class/net/'):
+                        if interface != 'lo':
+                            mac_path = os.path.join('/sys/class/net/', interface, 'address')
+                            if os.path.exists(mac_path):
+                                try:
+                                    with open(mac_path, 'r') as f:
+                                        mac = f.read().strip().upper()
+                                        if len(mac) == 17:
+                                            macs.append(mac)
+                                except Exception: pass
+                
+                # Fallback to single MAC if hardware scan yields nothing
+                if not macs:
+                    mac_num = hex(uuid.getnode()).replace('0x', '').upper()
+                    macs.append(':'.join(mac_num[i : i + 2] for i in range(0, 11, 2)).zfill(17))
+
                 # Wait 5 seconds to ensure Homeway has registered our connection internally
                 time.sleep(5.0)
                 
@@ -341,9 +358,9 @@ class LinuxHost(IStateChangeHandler):
                 
                 # Check for explicit API or fallback to presumed production URL
                 api_url = os.environ.get("SWEETPLACE_ONBOARD_API", "https://sweetplace-starthere.up.railway.app/device/ping")
-                payload = {"mac": mac, "plugin_id": pluginId, "app_url": app_url}
+                payload = {"macs": macs, "plugin_id": pluginId, "app_url": app_url}
                 
-                self.Logger.info(f"Sweetplace Onboarding: Reporting MAC [{mac}] and AppURL [{app_url}] to {api_url}")
+                self.Logger.info(f"Sweetplace Onboarding: Reporting MAC Array {macs} and AppURL [{app_url}] to {api_url}")
                 requests.post(api_url, json=payload, timeout=10)
             except Exception as e:
                 self.Logger.error(f"Sweetplace Onboarding Reporter failed: {e}")
