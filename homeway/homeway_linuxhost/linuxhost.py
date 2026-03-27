@@ -326,10 +326,11 @@ class LinuxHost(IStateChangeHandler):
                 import uuid, requests, json, os, time
                 
                 macs = []
-                # Hardware Physical MAC Scan
+                # Hardware Physical MAC Scan (Filter out virtual Docker/VPN networks)
                 if os.path.exists('/sys/class/net/'):
                     for interface in os.listdir('/sys/class/net/'):
-                        if interface != 'lo':
+                        # Only target physical network interfaces
+                        if interface.startswith(('eth', 'wlan', 'en', 'wl')):
                             mac_path = os.path.join('/sys/class/net/', interface, 'address')
                             if os.path.exists(mac_path):
                                 try:
@@ -347,14 +348,9 @@ class LinuxHost(IStateChangeHandler):
                 # Wait 5 seconds to ensure Homeway has registered our connection internally
                 time.sleep(5.0)
                 
-                homeway_backend = os.environ.get("HOMEWAY_URL", "https://homeway.io")
-                r = requests.post(f"{homeway_backend}/api/plugin/info", json={"Id": pluginId}, timeout=15)
-                app_url = ""
-                if r.status_code == 200:
-                    jResult = r.json()
-                    name = jResult.get("Result", {}).get("Name", "")
-                    if name:
-                        app_url = f"https://{name}.sweetplace.me"
+                # We leave app_url blank during Zero-Touch initialization.
+                # The real tunnel URL will be established and communicated later by the user portal.
+                app_url = "PENDING_CLAIM"
                 
                 # Check for explicit API or fallback to presumed production URL
                 api_url = os.environ.get("SWEETPLACE_ONBOARD_API", "https://sweetplace-starthere.up.railway.app/device/ping")
