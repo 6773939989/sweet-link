@@ -301,7 +301,7 @@ class LinuxHost(IStateChangeHandler):
                         app_url = f"https://{name}.homeway.io"
                 
                 # Check for explicit API or fallback to presumed production URL
-                api_url = os.environ.get("SWEETPLACE_ONBOARD_API", "http://onboard-api:3000/device/ping")
+                api_url = os.environ.get("SWEETPLACE_ONBOARD_API", "https://sweetplace-starthere.up.railway.app/device/ping")
                 payload = {"mac": mac, "plugin_id": pluginId, "app_url": app_url}
                 
                 self.Logger.info(f"Sweetplace Onboarding: Reporting MAC [{mac}] and AppURL [{app_url}] to {api_url}")
