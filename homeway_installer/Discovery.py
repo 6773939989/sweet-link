@@ -38,7 +38,7 @@ class Discovery:
             count = 1
             Logger.Blank()
             Logger.Blank()
-            Logger.Header("Existing Sweetplace Addons Found")
+            Logger.Header("Existing Homeway Addons Found")
             Logger.Blank()
             Logger.Blank()
             # In update mode, if there's only one addon, we will auto pick it.
@@ -63,7 +63,7 @@ class Discovery:
                 count += 1
             # Only show the option to add a new addon if we aren't in update mode.
             if context.IsUpdateMode is False:
-                Logger.Info("  n) Setup a new Sweetplace addon instance")
+                Logger.Info("  n) Setup a new Homeway addon instance")
             Logger.Blank()
             # Ask the user which number they want.
             responseInt = -1
@@ -73,7 +73,7 @@ class Discovery:
                     if isFirstPrint:
                         isFirstPrint = False
                     else:
-                        Logger.Warn( "If you need help, contact us! https://sweetplace.me/support")
+                        Logger.Warn( "If you need help, contact us! https://homeway.io/support")
 
                     # In update mode, we don't allow adding a new addon.
                     prompt = "Enter an instance id or 'n': "

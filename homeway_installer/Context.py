@@ -72,7 +72,7 @@ class Context:
         # Generation 3 - This it the path to the logs folder.
         self.LogFolder:str = None #pyright: ignore[reportAttributeAccessIssue] we allow these to not be optional, so logic doesn't have to check. The validation function will check before they are used.
 
-        # Generation 3 - This is the name of this Sweetplace instance's service.
+        # Generation 3 - This is the name of this Homeway instance's service.
         self.ServiceName:str = None #pyright: ignore[reportAttributeAccessIssue] we allow these to not be optional, so logic doesn't have to check. The validation function will check before they are used.
 
         # Generation 3 - The full file path and file name of this instance's service file.

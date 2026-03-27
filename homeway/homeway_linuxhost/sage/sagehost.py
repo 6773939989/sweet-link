@@ -41,7 +41,7 @@ class SageHost:
 
 
     # Once the api key is known, we can start.
-    # Note this is called every time the main WS connection to Sweetplace is reset, which happens about every day.
+    # Note this is called every time the main WS connection to Homeway is reset, which happens about every day.
     def StartOrRefresh(self, pluginId:str, apiKey:str) -> None:
 
         # Set or update these values.

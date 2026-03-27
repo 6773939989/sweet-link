@@ -42,7 +42,7 @@ class Service:
         # Note we use root as a user instead of the installing user
         # to make sure we have access to the HA config file for updates if needed
         s:str = f'''\
-    # Sweetplace Addon Service
+    # Homeway Addon Service
     [Unit]
     Description=Homeway
     # Start after network has started

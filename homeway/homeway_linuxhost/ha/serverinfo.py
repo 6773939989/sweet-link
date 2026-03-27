@@ -185,7 +185,7 @@ class ServerInfo:
         start = time.time()
 
         # Setup the message used when logging about this.
-        notEnabledMsg = "X-Forwarded-For header is NOT enabled on this Home Assistant server, enabling it might improve Sweetplace functionality. Learn More: https://sweetplace.me/s/http-config-guide"
+        notEnabledMsg = "X-Forwarded-For header is NOT enabled on this Home Assistant server, enabling it might improve Homeway functionality. Learn More: https://homeway.io/s/http-config-guide"
         if ServerInfo.GetAddonDockerSupervisorAccessToken() is not None:
             notEnabledMsg = "X-Forwarded-For header is not enabled on this Home Assistant server. The addon will automatically enabled this on the next server restart."
 

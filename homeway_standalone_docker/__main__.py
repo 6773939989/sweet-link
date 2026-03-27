@@ -29,7 +29,7 @@ if __name__ == '__main__':
     logger.addHandler(std)
 
     logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-    logger.info("  Starting Sweetplace Standalone Docker Bootstrap")
+    logger.info("  Starting Homeway Standalone Docker Bootstrap")
     logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
 
     #
@@ -83,7 +83,7 @@ if __name__ == '__main__':
             logger.error("           The value can be a hostname like `localhost` or `homeassistant.local`")
             logger.error("                    or an IP address like `127.0.0.1` or `192.168.1.10`")
             logger.error("")
-            logger.error("                If you need help, contact us -> https://sweetplace.me/support")
+            logger.error("                If you need help, contact us -> https://homeway.io/support")
             logger.error("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
             logger.error("")
             logger.error("")
@@ -125,7 +125,7 @@ if __name__ == '__main__':
             logger.error("  5) Enter any name, something 'Homeway Addon' works just fine.")
             logger.error("  6. Copy the access token and use it in the docker run command line or your docker compose file.")
             logger.error("")
-            logger.error("              If you need help, contact us -> https://sweetplace.me/support")
+            logger.error("              If you need help, contact us -> https://homeway.io/support")
             logger.error("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
             logger.error("")
             logger.error("")
@@ -137,7 +137,7 @@ if __name__ == '__main__':
         remoteAccessEnabledStr = os.environ.get("ENABLE_REMOTE_ACCESS", None)
         if remoteAccessEnabledStr is not None:
             remoteAccessEnabled = remoteAccessEnabledStr.lower() in ["1", "true", "yes", "on"]
-            logger.info(f"Setting Sweetplace Remote Access Enabled to: {str(remoteAccessEnabled)}")
+            logger.info(f"Setting Homeway Remote Access Enabled to: {str(remoteAccessEnabled)}")
             config.SetBool(Config.HomeAssistantSection, Config.HaEnableRemoteAccess, remoteAccessEnabled)
 
         # Create the rest of the required dirs based in the data dir, since it's persistent.
@@ -182,7 +182,7 @@ if __name__ == '__main__':
             logger.error(f"Homeway standalone docker container exited with an error. Result: {result.returncode}")
 
     except Exception as e:
-        LogException("Exception while bootstrapping Sweetplace Standalone Docker.", e)
+        LogException("Exception while bootstrapping Homeway Standalone Docker.", e)
 
     # Sleep for a bit, so if we are restarted we don't do it instantly.
     time.sleep(3)

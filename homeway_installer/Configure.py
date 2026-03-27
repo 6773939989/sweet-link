@@ -105,8 +105,8 @@ class Configure:
         Logger.Header("        Home Assistant Setup")
         Logger.Header("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
         Logger.Blank()
-        Logger.Info("The Sweetplace add-on will now try to search for your Home Assistant server.")
-        Logger.Info("If you have any trouble, we are happy to help! Contact us at support@sweetplace.me")
+        Logger.Info("The Homeway add-on will now try to search for your Home Assistant server.")
+        Logger.Info("If you have any trouble, we are happy to help! Contact us at support@homeway.io")
         Logger.Blank()
         Logger.Info("Searching for local Home Assistant servers... please wait... (about 5 seconds)")
 
@@ -386,7 +386,7 @@ class Configure:
             Logger.Header("     Home Assistant Access Token")
             Logger.Header("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
             Logger.Blank()
-            Logger.Header("For Sweetplace to access your Home Assistant server, you need to create a 'Long-Lived Access Token'.")
+            Logger.Header("For Homeway to access your Home Assistant server, you need to create a 'Long-Lived Access Token'.")
             Logger.Blank()
             # Note this text is also duplicated in the docker host homeway_standalone_docker.__main__.py
             Logger.Info("To create a Long-Lived Access Token in Home Assistant, follow these steps:")
@@ -412,4 +412,4 @@ class Configure:
                 Logger.Error("The add-on was able to connect to your Home Assistant server, but the Access Token was invalid.")
             else:
                 Logger.Error("The add-on was unable to connect to your Home Assistant server.")
-            Logger.Error("Try again. If you need any help contact us at support@sweetplace.me")
+            Logger.Error("Try again. If you need any help contact us at support@homeway.io")

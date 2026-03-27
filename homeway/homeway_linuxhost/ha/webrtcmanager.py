@@ -65,7 +65,7 @@ class WebRtcManager():
                     "PluginId": self.PluginId,
                     "ApiKey": apiKey
                 }
-                url = os.environ.get("HOMEWAY_URL", "https://sweetplace.me") + "/api/webrtc/config"
+                url = os.environ.get("HOMEWAY_URL", "https://homeway.io") + "/api/webrtc/config"
                 result = HttpSessions.GetSession(url).post(url, json=request, timeout=15.0)
                 if result.status_code != 200:
                     raise ValueError(f"Failed to get WebRTC config from server; status code: {result.status_code}")
@@ -99,7 +99,7 @@ class WebRtcManager():
         self.Config.SetStr(Config.WebRtcSection, Config.WebRtcTurnServersKey, json.dumps(turnServers))
 
         if not self.HaConfigManager.CanEditConfig():
-            self.Logger.info("WebRTC enables secure and low-latency remote camera and video streaming.\nYour WebRTC username and password are:\nUsername: %s\nPassword: %s\nTo configure WebRTC, follow this guide: https://sweetplace.me/s/webrtc-config\n", username, password)
+            self.Logger.info("WebRTC enables secure and low-latency remote camera and video streaming.\nYour WebRTC username and password are:\nUsername: %s\nPassword: %s\nTo configure WebRTC, follow this guide: https://homeway.io/s/webrtc-config\n", username, password)
             return
 
         # Try to update the Home Assistant config file with web_rtc settings
@@ -108,12 +108,12 @@ class WebRtcManager():
 
 
     # Comment marker to identify Homeway-managed web_rtc config sections
-    # Flag keyword that users can set to false in the comment to stop Sweetplace from auto-updating
+    # Flag keyword that users can set to false in the comment to stop Homeway from auto-updating
     # This must remain as a one line comment!
     c_ConfigLineEnding       = "\r\n"
     c_HomewayAutoUpdateFlag  = "homeway_auto_update"
     c_HomewayCommentMarker   = "# Added by Homeway"
-    c_HomewayCommentFullLine = f"{c_HomewayCommentMarker} to enable webrtc video streaming. Prevent Sweetplace from updating web_rtc by setting following to false: {c_HomewayAutoUpdateFlag}:true{c_ConfigLineEnding}" # this ending must remain "c_HomewayAutoUpdateFlag:true"
+    c_HomewayCommentFullLine = f"{c_HomewayCommentMarker} to enable webrtc video streaming. Prevent Homeway from updating web_rtc by setting following to false: {c_HomewayAutoUpdateFlag}:true{c_ConfigLineEnding}" # this ending must remain "c_HomewayAutoUpdateFlag:true"
 
     def _UpdateWebRtcConfig(self, username:str, password:str, stunServers:List[str], turnServers:List[str]) -> None:
         try:
@@ -147,8 +147,8 @@ class WebRtcManager():
                 if lineLower.startswith("web_rtc:"):
                     self.Logger.debug("WebRTC: Found existing web_rtc config section at line %d.", lineNumber + 1)
                     webRtcSectionLineNumber = lineNumber
-                    # Check the lines immediately before web_rtc for Sweetplace comment.
-                    # The Sweetplace comment will always be one line.
+                    # Check the lines immediately before web_rtc for Homeway comment.
+                    # The Homeway comment will always be one line.
                     checkLine = lineNumber - 1
                     while checkLine >= 0:
                         checkLineLower = lines[checkLine].lower()
@@ -157,21 +157,21 @@ class WebRtcManager():
                             break
                         if self.c_HomewayCommentMarker.lower() in checkLineLower:
                             homewayCommentLineNumber = checkLine
-                            self.Logger.debug("WebRTC: Found Sweetplace comment marker at line %d.", checkLine + 1)
+                            self.Logger.debug("WebRTC: Found Homeway comment marker at line %d.", checkLine + 1)
                             # Check the value of the auto_update flag.
                             flagPosition = checkLineLower.find(self.c_HomewayAutoUpdateFlag.lower())
                             if flagPosition != -1:
                                 flagPosition += len(self.c_HomewayAutoUpdateFlag)
                                 # Get the rest of the line after the flag, check if the value false is in there.
                                 flagValuePartLower = checkLineLower[flagPosition:]
-                                self.Logger.debug(f"WebRTC: Found auto update flag in Sweetplace comment. `{flagValuePartLower}`")
+                                self.Logger.debug(f"WebRTC: Found auto update flag in Homeway comment. `{flagValuePartLower}`")
                                 if "false" in flagValuePartLower:
                                     autoUpdateEnabled = False
                         break
                     break  # Stop searching after finding web_rtc section
                 lineNumber += 1
 
-            # Case 1: No web_rtc section exists - add new one with Sweetplace comment
+            # Case 1: No web_rtc section exists - add new one with Homeway comment
             if webRtcSectionLineNumber is None:
                 self.Logger.info("WebRTC: Adding new web_rtc config section to Home Assistant configuration.")
                 webRtcConfig = self._BuildWebRtcConfig(username, password, stunServers, turnServers)
@@ -182,9 +182,9 @@ class WebRtcManager():
                     f.write(self.c_ConfigLineEnding)
                 return
 
-            # Case 2: web_rtc section exists but no Sweetplace comment - add comment with auto_update=false to preserve user config
+            # Case 2: web_rtc section exists but no Homeway comment - add comment with auto_update=false to preserve user config
             if homewayCommentLineNumber is None:
-                self.Logger.info("WebRTC: Found existing web_rtc config without Sweetplace marker. Adding marker with auto_update=false to preserve user config.")
+                self.Logger.info("WebRTC: Found existing web_rtc config without Homeway marker. Adding marker with auto_update=false to preserve user config.")
                 # Insert the comment line before the web_rtc section
                 fullCommentLine = self.c_HomewayCommentFullLine
                 # Replace the c_HomewayAutoUpdateFlag to set it to false
@@ -194,12 +194,12 @@ class WebRtcManager():
                     f.writelines(lines)
                 return
 
-            # Case 3: web_rtc section exists with Sweetplace comment but auto_update=false
+            # Case 3: web_rtc section exists with Homeway comment but auto_update=false
             if not autoUpdateEnabled:
                 self.Logger.debug("WebRTC: web_rtc config exists with auto_update=false. Skipping update.")
                 return
 
-            # Case 4: web_rtc section exists with Sweetplace comment and auto_update is not disabled - update the config
+            # Case 4: web_rtc section exists with Homeway comment and auto_update is not disabled - update the config
             self.Logger.debug("WebRTC: Updating existing web_rtc config section.")
             self._ReplaceWebRtcSection(lines, webRtcSectionLineNumber, homewayCommentLineNumber, username, password, stunServers, turnServers, configFilePath)
 

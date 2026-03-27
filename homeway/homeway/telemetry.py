@@ -9,7 +9,7 @@ from .httpsessions import HttpSessions
 class Telemetry:
 
     Logger:logging.Logger = None #pyright: ignore[reportAssignmentType]
-    ServerProtocolAndDomain = os.environ.get("HOMEWAY_URL", "https://sweetplace.me")
+    ServerProtocolAndDomain = os.environ.get("HOMEWAY_URL", "https://homeway.io")
 
 
     @staticmethod

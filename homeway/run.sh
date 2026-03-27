@@ -8,4 +8,4 @@
 # This is the json config, that's base64 encoded and sent as an argument.
 # { "VersionFileDir":"/app", "AddonDataRootDir":"/data", "StorageDir":"/data", "LogsDir":"/data", "IsRunningInHaAddonEnv":true }
 
-python3 -m sweetplace_linuxhost eyAiVmVyc2lvbkZpbGVEaXIiOiIvYXBwIiwgIkFkZG9uRGF0YVJvb3REaXIiOiIvZGF0YSIsICJTdG9yYWdlRGlyIjoiL2RhdGEiLCAiTG9nc0RpciI6Ii9kYXRhIiwgIklzUnVubmluZ0luSGFBZGRvbkVudiI6dHJ1ZSB9
+python3 -m homeway_linuxhost eyAiVmVyc2lvbkZpbGVEaXIiOiIvYXBwIiwgIkFkZG9uRGF0YVJvb3REaXIiOiIvZGF0YSIsICJTdG9yYWdlRGlyIjoiL2RhdGEiLCAiTG9nc0RpciI6Ii9kYXRhIiwgIklzUnVubmluZ0luSGFBZGRvbkVudiI6dHJ1ZSB9

@@ -482,7 +482,7 @@ class EventHandler:
         self.Logger.debug(f"_StateChangeSender is sending {(len(events))} assistant state change events.")
         try:
             # Make the call.
-            url = os.environ.get("HOMEWAY_URL", "https://sweetplace.me") + "/api/plugin-api/statechangeevents"
+            url = os.environ.get("HOMEWAY_URL", "https://homeway.io") + "/api/plugin-api/statechangeevents"
             if self.DevLocalHomewayServerAddress is not None:
                 url = f"http://{self.DevLocalHomewayServerAddress}/api/plugin-api/statechangeevents"
             result = HttpSessions.GetSession(url).post(url, json={"PluginId": self.PluginId, "ApiKey": self.HomewayApiKey, "Events": events }, timeout=30)

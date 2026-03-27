@@ -208,7 +208,7 @@ class CommandHandler:
     # Common Handler Core Logic
     #
 
-    # Returns True or False depending if this request is a Sweetplace command or not.
+    # Returns True or False depending if this request is a Homeway command or not.
     # If it is, HandleCommand should be used to get the response.
     def IsCommandRequest(self, httpInitialContext:HttpInitialContext) -> bool:
         # Get the path to check if it's a command or not.

@@ -17,10 +17,10 @@ class Updater:
 #!/bin/bash
 
 #
-# This is a helper script to allow easy updating of the Sweetplace standalone add-on.
+# This is a helper script to allow easy updating of the Homeway standalone add-on.
 # To update your add-on, simply run the script and follow the prompts!
 #
-# If you need help, feel free to contact us at support@sweetplace.me
+# If you need help, feel free to contact us at support@homeway.io
 #
 
 # The update and install scripts need to be ran from the repo root.

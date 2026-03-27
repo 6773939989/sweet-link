@@ -2,10 +2,10 @@
 # yamllint disable rule:line-length
 
 # General details
-name: "Sweetplace"
+name: "Homeway"
 description: "Empower your Home Assistant with free & secure remote access, ChatGPT powered AI, Google and Alexa support, and more!"
-slug: "sweetplace"
-url: "https://sweetplace.me"
+slug: "homeway"
+url: "https://homeway.io"
 
 # The icon used if the user adds our web ui to the side bar.
 panel_icon: mdi:home-sound-out
@@ -34,7 +34,7 @@ ingress_port: 45120
 ports:
   "11027/tcp": null
 ports_description:
-  "11027/tcp": "Sweetplace's Sage Assist Wyoming Protocol"
+  "11027/tcp": "Homeway's Sage Assist Wyoming Protocol"
 
 # Add some config options for user to control the addon.
 # These options are defined in the schema section below, and the translations for them are in the en.yaml file, which gives them pretty names.
@@ -49,7 +49,7 @@ auth_api: true
 
 # Defines that instead of HA building the docker image from source, it will be downloaded from our github package repo.
 # For local dev this must be commented out, but it should never be committed that way.
-image: ghcr.io/sweetplaceio/sweetplace/{arch}
+image: ghcr.io/homewayio/homeway/{arch}
 
 # Note when this version number changes, we must make a release to start a docker container build immediately, since HA will start looking for the new version.
 # Basically: Make the final commit -> test and check lint actions (if a docker change, push to docker-test to ensure it builds) -> bump the version number -> create GitHub release.

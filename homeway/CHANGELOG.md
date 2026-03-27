@@ -1,10 +1,10 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
-<!-- This is used in the sweetplace UI to show updates, so keep it up to date. -->
+<!-- This is used in the homeway UI to show updates, so keep it up to date. -->
 
 ## 2.6.0 - 2.6.6
 
-- 📺 [Adding free WebRTC support!](https://blog.sweetplace.me/free-webrtc-video-streaming-for-home-assistant/)
-    - [Checkout our launch blog post for details.](https://blog.sweetplace.me/free-webrtc-video-streaming-for-home-assistant/)
+- 📺 [Adding free WebRTC support!](https://blog.homeway.io/free-webrtc-video-streaming-for-home-assistant/)
+    - [Checkout our launch blog post for details.](https://blog.homeway.io/free-webrtc-video-streaming-for-home-assistant/)
     - We are enabling free STUN and TURN servers for all users.
 - 🐛 Bug fixes and various other improvements.
 - 🐞 Bug fix that prevented WebRTC Camera from working.
@@ -13,7 +13,7 @@
 
 ## 2.5.5
 
-- ⚙️ Adding logic to atomically configure the Home Assistant config trusted proxies correctly to ensure Sweetplace can access Home Assistant.
+- ⚙️ Adding logic to atomically configure the Home Assistant config trusted proxies correctly to ensure Homeway can access Home Assistant.
 - 👤 Adding logic to enable the X-Forwarded-For header for Home Assistant when possible.
 
 ## 2.5.4 - 2.4.0
@@ -21,10 +21,10 @@
 - 🐛 Fixing a connection bug some users are experiencing.
 - 🤖 Google Home & Alexa device filtering is here!
     - You can now use the same Home Assistant UI as you do with Nabu Casa to expose or un-expose devices to Alexa, Google Home, and Sage.
-    - In a few weeks, you will also be able to expose and un-expose devices directly from the Sweetplace website!
+    - In a few weeks, you will also be able to expose and un-expose devices directly from the Homeway website!
     - If you already have devices exposed the way you wish, this update will atomically sync your Google Home and Alexa devices to match!
 - 🐛 We fixed the bug that caused the "failed login attempt from localhost" notification!
-- 🛑 You can now disable remote access while keeping the rest of Sweetplace's features working! Remote access can be disabled from the Sweetplace Web UI in Home Assistant.
+- 🛑 You can now disable remote access while keeping the rest of Homeway's features working! Remote access can be disabled from the Homeway Web UI in Home Assistant.
 
 ## 2.3.0
 
@@ -32,7 +32,7 @@
 - 🤖 New AI engine make Sage even smarter and lower the latency.
 - 🔈 New life-like voices powered by ElevenLabs.
 - 🗣️ Dramatic speech-to-text accuracy and latency improvements.
-- 🔥 [See our announcement blog post for full details.](https://blog.sweetplace.me/sage-ai-the-most-advanced-ai-home-assistant-integration/)
+- 🔥 [See our announcement blog post for full details.](https://blog.homeway.io/sage-ai-the-most-advanced-ai-home-assistant-integration/)
 
 ## 2.2.13-19
 
@@ -55,12 +55,12 @@
 
 ## 2.2 - 2.0
 
-- 🤖 Introducing [Sweetplace Sage](https://blog.sweetplace.me/sweetplace-sage-free-private-intelligent-chatgpt-for-home-assistant-assist-voice/)! Your free, private, and smart Home Assistant Assist!
-    - Sweetplace's Sage assistant uses the latest AI services to empower your Home Assistant Assist for free.
+- 🤖 Introducing [Homeway Sage](https://blog.homeway.io/homeway-sage-free-private-intelligent-chatgpt-for-home-assistant-assist-voice/)! Your free, private, and smart Home Assistant Assist!
+    - Homeway's Sage assistant uses the latest AI services to empower your Home Assistant Assist for free.
     - Free OpenAI GPT4 chat with extended functions like web search, live sports, live weather, memory, and more.
     - Free text-to-speech powered by OpenAI, Google, Amazon, and more! (you can pick!)
     - Free low-latency speech-to-text powered by the latest AI models.
-    - Sage is now available in beta, [follow this guide to help get setup!](https://blog.sweetplace.me/sweetplace-sage-free-private-intelligent-chatgpt-for-home-assistant-assist-voice/)
+    - Sage is now available in beta, [follow this guide to help get setup!](https://blog.homeway.io/homeway-sage-free-private-intelligent-chatgpt-for-home-assistant-assist-voice/)
 
 ## 1.5.8
 
@@ -85,7 +85,7 @@
 
 ## 1.5.0
 
-- 🚀 Major CPU and memory performance improvements! Sweetplace is now EVEN FASTER!!
+- 🚀 Major CPU and memory performance improvements! Homeway is now EVEN FASTER!!
 - 🐛 Other minor bug fixes.
 
 ## 1.4.0-5
@@ -115,14 +115,14 @@
 
 ## 1.1.3
 
-- Adding the new Sweetplace icon! 😍
+- Adding the new Homeway icon! 😍
 - Fixing an issue where the webserver fails to start.
 - Fixing a few small bugs.
 
 ## 1.1.0-2
 
 - Performance improvements! Remote access has never been faster!
-- Fixed an issue where after linking your account the Sweetplace addon web portal didn't update.
+- Fixed an issue where after linking your account the Homeway addon web portal didn't update.
 - Fixed a few bugs around WebSocket lifetime issues.
 - Fixed a few issues with Assistants and proactive updates.
 
@@ -145,7 +145,7 @@
 ## 1.0.0
 
 - The official 1.0 Release! 🥳
-- Sweetplace Standalone Add-on - You can now run Sweetplace directly on your linux device if your Home Assistant setup doesn't support Add-ons!
+- Homeway Standalone Add-on - You can now run Homeway directly on your linux device if your Home Assistant setup doesn't support Add-ons!
 - Better assistant rate limiting for chatty home devices.
 
 ## 0.4.3

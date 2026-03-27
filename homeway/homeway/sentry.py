@@ -74,7 +74,7 @@ class Sentry:
     def _setupSentryInternal(versionString:str, distType:str, isDevMode:bool, canEnableProfiling:bool) -> None:
 
         # Make the API call to get the Sentry config.
-        response = requests.post(os.environ.get("HOMEWAY_URL", "https://sweetplace.me") + "/api/plugin/sentryconfig", json={'PluginVersion': versionString, 'DistType': distType}, timeout=20)
+        response = requests.post(os.environ.get("HOMEWAY_URL", "https://homeway.io") + "/api/plugin/sentryconfig", json={'PluginVersion': versionString, 'DistType': distType}, timeout=20)
         if response.status_code != 200:
             raise Exception(f"Failed to get sentry config, status code {response.status_code}")
 

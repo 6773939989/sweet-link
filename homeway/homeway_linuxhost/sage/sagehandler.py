@@ -266,7 +266,7 @@ class SageHandler(AsyncEventHandler, ISageHandler):
         # Get the current programs / models / voices from the service.
         try:
             # Get the correct URL
-            url = os.environ.get("HOMEWAY_URL", "https://sweetplace.me") + "/api/sage/getmodels"
+            url = os.environ.get("HOMEWAY_URL", "https://homeway.io") + "/api/sage/getmodels"
             if self.DevLocalHomewayServerAddress is not None:
                 url = f"http://{self.DevLocalHomewayServerAddress}/api/sage/getmodels"
 

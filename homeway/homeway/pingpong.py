@@ -309,7 +309,7 @@ class PingPong:
                 subdomain = "starport-v1"
 
             # Setup the URLs
-            host = f"https://{subdomain}." + os.environ.get("HOMEWAY_DOMAIN", "sweetplace.me")
+            host = f"https://{subdomain}." + os.environ.get("HOMEWAY_DOMAIN", "homeway.io")
             pingInfoApiUrl = host+"/api/plugin/ping"
             pingDirectApiUrl = host+"/api/nginx-direct/ping/"
 
