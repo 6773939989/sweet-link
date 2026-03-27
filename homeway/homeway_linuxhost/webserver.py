@@ -198,7 +198,7 @@ class WebServer(IAccountLinkStatusUpdateHandler):
                     connectingTimerBool = "true"
             html = """
 <html>
-<head><title>Homeway Control</title>
+<head><title>Sweetplace Control</title>
 <style>
     .whiteLink {
         color: white;
@@ -325,7 +325,7 @@ class WebServer(IAccountLinkStatusUpdateHandler):
                 <img src="https://homeway.io/img/logo_maskable.png" height="70" width="70" style="width: 70px; height: 70px;    border-radius: 10px">
                 <div style="display: flex; justify-content: center; font-size: 28px; margin-bottom:10px; margin-top:10px">
                     <!-- this must target open blank or it won't open properly! -->
-                    <a href="https://homeway.io/dashboard?ha=1&source=addon_web_ui_link" target="_blank" class="whiteLink">Homeway</a>
+                    <a href="https://homeway.io/dashboard?ha=1&source=addon_web_ui_link" target="_blank" class="whiteLink">Sweetplace</a>
                 </div>
             </div>
         </div>

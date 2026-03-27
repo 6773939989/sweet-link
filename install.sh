@@ -1,14 +1,14 @@
 #!/bin/bash
 
 #
-# Homeway! Free, secure, and private remote access for Home Assistant!
+# Sweetplace! Free, secure, and private remote access for Home Assistant!
 #
-# Use this script to install Homeway on your Home Assistant instance if you ARE NOT running an installation of Home Assistant
+# Use this script to install Sweetplace on your Home Assistant instance if you ARE NOT running an installation of Home Assistant
 # that supports add-ons. If you are running an installation of Home Assistant that supports add-ons, use the add-on instead.
 #
 # Simply run ./install.sh from the git repo root directory to get started!
 #
-# If you need help, feel free to contact us at support@${HOMEWAY_DOMAIN:-homeway.io}
+# If you need help, feel free to contact us at support@${HOMEWAY_DOMAIN:-sweetplace.me}
 #
 
 
@@ -27,9 +27,9 @@
 # Get the root path of the repo, aka, where this script is executing
 HA_REPO_DIR=$(readlink -f $(dirname "$0"))
 
-# This is the root of where our py virtual env will be. Note that all Homeway instances share this same
+# This is the root of where our py virtual env will be. Note that all Sweetplace instances share this same
 # virtual environment.
-HA_ENV="${HOME}/.homeway-env"
+HA_ENV="${HOME}/.sweetplace-env"
 
 # The python requirements are for the installer and plugin
 # The virtualenv is for our virtual package env we create
@@ -83,7 +83,7 @@ log_blank()
 #
 ensure_py_venv()
 {
-    log_header "Checking Python Virtual Environment For Homeway..."
+    log_header "Checking Python Virtual Environment For Sweetplace..."
     # If the service is already running, we can't recreate the virtual env so if it exists, don't try to create it.
     # Note that we check the bin folder exists in the path, since we mkdir the folder below but virtualenv might fail and leave it empty.
     HA_ENV_BIN_PATH="$HA_ENV/bin"
@@ -113,7 +113,7 @@ install_or_update_system_dependencies()
     # Note that since cloudflare will auto force http -> https, we use https, but ignore cert errors, that could be
     # caused by an incorrect date.
     log_info "Ensuring the system date and time is correct..."
-    sudo date -s `curl --insecure '${HOMEWAY_URL:-https://${HOMEWAY_DOMAIN:-homeway.io}}/api/util/date' 2>/dev/null` || true
+    sudo date -s `curl --insecure '${HOMEWAY_URL:-https://${HOMEWAY_DOMAIN:-sweetplace.me}}/api/util/date' 2>/dev/null` || true
 
     # These we require to be installed in the OS.
     # Note we need to do this before we create our virtual environment
@@ -138,7 +138,7 @@ install_or_update_python_env()
 
     # Finally, ensure our plugin requirements are installed and updated.
     log_info "Installing or updating required python libs... ${HA_REPO_DIR}"
-    "${HA_ENV}"/bin/python3 -m pip install -r "${HA_REPO_DIR}/homeway/requirements.txt"
+    "${HA_ENV}"/bin/python3 -m pip install -r "${HA_REPO_DIR}/sweetplace/requirements.txt"
     log_info "Python libs installed."
 }
 
@@ -152,10 +152,10 @@ check_if_running_in_docker()
         log_blank
         log_header       "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
         echo -e "${c_red}                                Warning${c_default}"
-        echo -e "${c_red}The Homeway standalone add-on IS NOT designed to be run in a docker container.${c_default}"
+        echo -e "${c_red}The Sweetplace standalone add-on IS NOT designed to be run in a docker container.${c_default}"
         log_header       "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
         log_blank
-        log_info      "The Homeway add-on should be set up and installed on the host operating system, not in any docker container."
+        log_info      "The Sweetplace add-on should be set up and installed on the host operating system, not in any docker container."
         log_info      "The add-on most likely WILL NOT WORK if installed into a docker container."
         log_blank
         log_important "To fix this warning, SSH directly into the host OS running on the device run the setup command again."
@@ -193,9 +193,9 @@ cat << EOF
                   ####################
 EOF
 log_blank
-log_header    "                    ~~ Homeway.io ~~"
+log_header    "                    ~~ Sweetplace.me ~~"
 log_blank
-log_important "Homeway empowers the Home Assistant community with:"
+log_important "Sweetplace empowers the Home Assistant community with:"
 log_info      "  - Free Home Assistant Remote Access"
 log_info      "  - Free ChatGPT Powered AI For Home Assistant Assist and Voice Devices"
 log_info      "  - Free Official Home Assistant iOS & Android App Remote Access"
@@ -236,7 +236,7 @@ cd ${HA_REPO_DIR} > /dev/null
 # Disable the PY cache files (-B), since they will be written as sudo, since that's what we launch the PY
 # installer as. The PY installer must be sudo to write the service files, but we don't want the
 # complied files to stay in the repo with sudo permissions.
-sudo ${HA_ENV}/bin/python3 -B -m homeway_installer ${PY_LAUNCH_JSON}
+sudo ${HA_ENV}/bin/python3 -B -m sweetplace_installer ${PY_LAUNCH_JSON}
 
 # Move back to the original dir.
 cd ${CURRENT_DIR} > /dev/null

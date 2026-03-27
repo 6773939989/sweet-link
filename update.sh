@@ -1,10 +1,10 @@
 #!/bin/bash
 
 #
-# Homeway Addon
+# Sweetplace Addon
 #
-# This script allows easy updating of the Homeway standalone addon when installed directly on a linux device.
-# If you're using a Homeway addon installed via Home Assistant's addon system, this is not required.
+# This script allows easy updating of the Sweetplace standalone addon when installed directly on a linux device.
+# If you're using a Sweetplace addon installed via Home Assistant's addon system, this is not required.
 #
 # If you need help, feel free to contact us at support@homway.io
 #
@@ -18,7 +18,7 @@ c_cyan=$(echo -en "\e[96m")
 
 echo ""
 echo ""
-echo -e "${c_magenta}Starting the Homeway standalone add-on update!${c_default}"
+echo -e "${c_magenta}Starting the Sweetplace standalone add-on update!${c_default}"
 echo ""
 echo ""
 

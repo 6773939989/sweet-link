@@ -1,5 +1,5 @@
 #
-# These are the packages we require for the homeway addon.
+# These are the packages we require for the sweetplace addon.
 #
 # Notes on versions
 #
@@ -12,7 +12,7 @@
 # zstandard
 #   zstandard gives us great compression that's super fast, but it requires a native lib to installed. The PY package will come with a lib and or try to build it, but we can also install it via apt-get.
 #   For the complexity, we can't list it as a required install, since it won't work on some platforms. So instead we will try to install it during runtime, and then it will be used after the following restart.
-#   The package version is defined in homeway.compression.ZStandardPipPackageString
+#   The package version is defined in sweetplace.compression.ZStandardPipPackageString
 #
 # Other lib version notes:
 #   certifi - We use to keep certs on the device that we need for let's encrypt. So we want to keep it fresh.
