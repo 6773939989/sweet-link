@@ -209,20 +209,29 @@ class HomeContext(IHomeContext):
         return None
 
 
-    def _GetSweetplaceFilterList(self) -> Optional[List[str]]:
+    def _GetSweetplaceFilterList_Multi(self, assistant_type:str) -> Optional[List[str]]:
         now = time.time()
-        # Cache for 60 seconds
-        if getattr(self, "_SweetplaceFilterCacheTime", 0) > now - 60:
-            return getattr(self, "_SweetplaceFilterCacheList", None)
+        
+        if not hasattr(self, "_SweetplaceMultiCacheTime"):
+            self._SweetplaceMultiCacheTime = {}
+            self._SweetplaceMultiCacheList = {}
             
-        self._SweetplaceFilterCacheTime = now
+        # Cache for 60 seconds per assistant
+        if self._SweetplaceMultiCacheTime.get(assistant_type, 0) > now - 60:
+            return self._SweetplaceMultiCacheList.get(assistant_type, None)
+            
+        self._SweetplaceMultiCacheTime[assistant_type] = now
         filterList = None
         
-        path1 = "/homeassistant/sweetplace_filter.yaml"
-        # If running outside AddOn, fallback to core path
-        configPath = path1
+        filename = f"{assistant_type}.yaml"
+        # Since we run inside the HA addon container, /config is mapped to /homeassistant
+        configPath = f"/homeassistant/sweetplace/haconfig/this-home/vocal_assistants/{filename}"
+        
+        # Fallback for standalone outside docker 
         if not os.path.exists(configPath):
-            configPath = "/home/homeassistant/.homeassistant/sweetplace_filter.yaml"
+            configPath = f"/home/homeassistant/.homeassistant/sweetplace/haconfig/this-home/vocal_assistants/{filename}"
+            if not os.path.exists(configPath):
+                configPath = f"/config/sweetplace/haconfig/this-home/vocal_assistants/{filename}"
             
         if os.path.exists(configPath):
             try:
@@ -230,21 +239,30 @@ class HomeContext(IHomeContext):
                 with open(configPath, "r", encoding="utf-8") as f:
                     data = yaml.safe_load(f)
                 if data and isinstance(data, dict):
-                    expose = data.get("expose")
-                    if isinstance(expose, list):
-                        filterList = expose
+                    # User requested to exclusively read the "filter:" section
+                    filter_sec = data.get("filter")
+                    if filter_sec and isinstance(filter_sec, dict):
+                        include_entities = filter_sec.get("include_entities")
+                        if isinstance(include_entities, list):
+                            filterList = include_entities
             except Exception as e:
-                self.Logger.error(f"Failed to read sweetplace_filter.yaml: {e}")
+                self.Logger.error(f"Failed to read {configPath}: {e}")
                 
-        self._SweetplaceFilterCacheList = filterList
+        self._SweetplaceMultiCacheList[assistant_type] = filterList
         return filterList
 
     # Given a device or entity dict and assistant types, this returns true or false if it's exposed or not.
     # If multiple assistants are checked, only one must be exposed to return true.
     def IsExposeToAssistant(self, obj:Dict[str, Any], checkAlexa:bool=False, checkGoogle:bool=False, checkSage:bool=False) -> bool:
-        # Check Sweetplace YAML Filter first for Alexa/Google
-        if checkAlexa or checkGoogle:
-            sweetFilter = self._GetSweetplaceFilterList()
+        # Check Sweetplace Multi-YAML Filter first
+        target_assistant = None
+        if checkAlexa:
+            target_assistant = "alexa"
+        elif checkGoogle:
+            target_assistant = "google_assistant"
+            
+        if target_assistant is not None:
+            sweetFilter = self._GetSweetplaceFilterList_Multi(target_assistant)
             if sweetFilter is not None:
                 entity_id = obj.get("entity_id", None)
                 if entity_id in sweetFilter:
