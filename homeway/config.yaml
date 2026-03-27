@@ -2,7 +2,7 @@
 # yamllint disable rule:line-length
 
 # General details
-name: "Sweetplace"
+name: "Sweetplace remote cloud"
 description: "Empower your Home Assistant with free & secure remote access, ChatGPT powered AI, Google and Alexa support, and more!"
 slug: "sweetplace"
 url: "https://sweetplace.me"
