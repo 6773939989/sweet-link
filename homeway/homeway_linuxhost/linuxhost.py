@@ -337,7 +337,7 @@ class LinuxHost(IStateChangeHandler):
                     jResult = r.json()
                     name = jResult.get("Result", {}).get("Name", "")
                     if name:
-                        app_url = f"https://{name}.homeway.io"
+                        app_url = f"https://{name}.sweetplace.me"
                 
                 # Check for explicit API or fallback to presumed production URL
                 api_url = os.environ.get("SWEETPLACE_ONBOARD_API", "https://sweetplace-starthere.up.railway.app/device/ping")
