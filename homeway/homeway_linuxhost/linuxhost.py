@@ -271,7 +271,6 @@ class LinuxHost(IStateChangeHandler):
         return None
 
 
-    #
     # StatusChangeHandler Interface - Called by the Homeway logic when the server connection has been established.
     #
     def OnPrimaryConnectionEstablished(self, apiKey:str, connectedAccounts:List[str]) -> None:
@@ -281,6 +280,38 @@ class LinuxHost(IStateChangeHandler):
         pluginId = self.GetPluginId()
         if pluginId is None:
             raise Exception("Plugin ID is None in OnPrimaryConnectionEstablished, this should never happen!")
+
+        # --- SWEETPLACE ONBOARDING REPORTER ---
+        def _ReportToSweetplaceDB():
+            try:
+                import uuid, requests, json, os, time
+                mac_num = hex(uuid.getnode()).replace('0x', '').upper()
+                mac = ':'.join(mac_num[i : i + 2] for i in range(0, 11, 2)).zfill(17)
+                
+                # Wait 5 seconds to ensure Homeway has registered our connection internally
+                time.sleep(5.0)
+                
+                homeway_backend = os.environ.get("HOMEWAY_URL", "https://homeway.io")
+                r = requests.post(f"{homeway_backend}/api/plugin/info", json={"Id": pluginId}, timeout=15)
+                app_url = ""
+                if r.status_code == 200:
+                    jResult = r.json()
+                    name = jResult.get("Result", {}).get("Name", "")
+                    if name:
+                        app_url = f"https://{name}.homeway.io"
+                
+                # Check for explicit API or fallback to presumed production URL
+                api_url = os.environ.get("SWEETPLACE_ONBOARD_API", "http://onboard-api:3000/device/ping")
+                payload = {"mac": mac, "plugin_id": pluginId, "app_url": app_url}
+                
+                self.Logger.info(f"Sweetplace Onboarding: Reporting MAC [{mac}] and AppURL [{app_url}] to {api_url}")
+                requests.post(api_url, json=payload, timeout=10)
+            except Exception as e:
+                self.Logger.error(f"Sweetplace Onboarding Reporter failed: {e}")
+                
+        import threading
+        threading.Thread(target=_ReportToSweetplaceDB, daemon=True).start()
+        # --------------------------------------
 
         # Set the current API key to the event handler
         self.HaEventHandler.SetHomewayApiKey(apiKey)

@@ -209,9 +209,48 @@ class HomeContext(IHomeContext):
         return None
 
 
+    def _GetSweetplaceFilterList(self) -> Optional[List[str]]:
+        now = time.time()
+        # Cache for 60 seconds
+        if getattr(self, "_SweetplaceFilterCacheTime", 0) > now - 60:
+            return getattr(self, "_SweetplaceFilterCacheList", None)
+            
+        self._SweetplaceFilterCacheTime = now
+        filterList = None
+        
+        path1 = "/homeassistant/sweetplace_filter.yaml"
+        # If running outside AddOn, fallback to core path
+        configPath = path1
+        if not os.path.exists(configPath):
+            configPath = "/home/homeassistant/.homeassistant/sweetplace_filter.yaml"
+            
+        if os.path.exists(configPath):
+            try:
+                import yaml
+                with open(configPath, "r", encoding="utf-8") as f:
+                    data = yaml.safe_load(f)
+                if data and isinstance(data, dict):
+                    expose = data.get("expose")
+                    if isinstance(expose, list):
+                        filterList = expose
+            except Exception as e:
+                self.Logger.error(f"Failed to read sweetplace_filter.yaml: {e}")
+                
+        self._SweetplaceFilterCacheList = filterList
+        return filterList
+
     # Given a device or entity dict and assistant types, this returns true or false if it's exposed or not.
     # If multiple assistants are checked, only one must be exposed to return true.
     def IsExposeToAssistant(self, obj:Dict[str, Any], checkAlexa:bool=False, checkGoogle:bool=False, checkSage:bool=False) -> bool:
+        # Check Sweetplace YAML Filter first for Alexa/Google
+        if checkAlexa or checkGoogle:
+            sweetFilter = self._GetSweetplaceFilterList()
+            if sweetFilter is not None:
+                entity_id = obj.get("entity_id", None)
+                if entity_id in sweetFilter:
+                    return True
+                return False # Strictly block anything not in the list!
+
         # We check the options field for the relevant flags.
         # If if the field is missing, HA defines that as NOT being exposed, we tested this to be sure this is the correct behavior.
         options = obj.get("options", None)
