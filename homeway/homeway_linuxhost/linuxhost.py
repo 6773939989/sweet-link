@@ -91,11 +91,50 @@ class LinuxHost(IStateChangeHandler):
             self.Logger.info("Plugin Type: %s", addonTypeStr)
             Sentry.Setup(pluginVersionStr, addonTypeStr, devConfig is not None)
 
-            # We don't store any sensitive things in the config file, since all config files are sometimes backed up publicly.
             self.Secrets = Secrets(self.Logger, storageDir)
+
+            # ====== SWEETPLACE FACTORY RESET ======
+            try:
+                from .ha.options import Options
+                wipe_flag = Options.GetOption("FACTORY_RESET_CLEAR_DATA", "false")
+                if str(wipe_flag).lower() == "true":
+                    old_id = self.GetPluginId()
+                    self.Logger.info("!!! SWEETPLACE FACTORY RESET REQUESTED !!!")
+                    self.Logger.info(f"Current Plugin ID before wipe: {old_id}")
+                    
+                    import os, shutil
+                    for filename in os.listdir(storageDir):
+                        if filename != "options.json":
+                            file_path = os.path.join(storageDir, filename)
+                            try:
+                                if os.path.isfile(file_path):
+                                    os.unlink(file_path)
+                                elif os.path.isdir(file_path):
+                                    shutil.rmtree(file_path)
+                            except Exception as e:
+                                self.Logger.error(f"Failed to delete {file_path}. Reason: {e}")
+                    
+                    # Verify destruction by creating a fresh empty Secrets instance
+                    self.Secrets = Secrets(self.Logger, storageDir)
+                    new_id = self.GetPluginId()
+                    self.Logger.info(f"Current Plugin ID after wipe: {new_id} (Should be None)")
+                    self.Logger.info("--------------------------------------------------------------------------")
+                    self.Logger.info("WIPE COMPLETE! The AddOn's cryptographic identity has been permanently erased.")
+                    self.Logger.info("1) Toggle OFF the 'FACTORY RESET' switch in the Home Assistant AddOn configuration.")
+                    self.Logger.info("2) Shut down the Raspberry Pi.")
+                    self.Logger.info("3) Clone your SD Card safely.")
+                    self.Logger.info("The AddOn is now halting purposely to prevent generation of a new ID...")
+                    self.Logger.info("--------------------------------------------------------------------------")
+                    import time
+                    while True:
+                        time.sleep(60)
+            except Exception as e:
+                self.Logger.error(f"Factory Reset Logic Failed: {e}")
+            # ======================================
 
             # Now, detect if this is a new instance and we need to init our global vars. If so, the setup script will be waiting on this.
             self.DoFirstTimeSetupIfNeeded()
+
 
             # Get our required vars
             pluginId = self.GetPluginId()

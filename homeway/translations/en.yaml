@@ -5,3 +5,7 @@ configuration:
     name: Log Level
     description: >-
       The log level to use for the app. Defaults to info, but debug is helpful for troubleshooting.
+  FACTORY_RESET_CLEAR_DATA:
+    name: "FACTORY RESET (Wipe Identity)"
+    description: >-
+      DANGER: Turn this ON and restart to wipe the PluginId. Use this BEFORE cloning the SD Card for mass distribution. The AddOn will freeze after wiping. Turn OFF after shutting down the Pi.

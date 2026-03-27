@@ -40,8 +40,10 @@ ports_description:
 # These options are defined in the schema section below, and the translations for them are in the en.yaml file, which gives them pretty names.
 options:
   log_level: "info"
+  FACTORY_RESET_CLEAR_DATA: false
 schema:
   log_level: list(debug|info|warning|error)?
+  FACTORY_RESET_CLEAR_DATA: bool
 
 # Allows the addon to make home assistant authed API calls to the core.
 homeassistant_api: true
