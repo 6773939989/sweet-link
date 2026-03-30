@@ -90,7 +90,7 @@ class CloudWorker:
             if not self.ha_connection:
                 raise Exception("HA WebSocket non inizializzato nel Worker")
                 
-            response = self.ha_connection.SendAndReceiveMsg({"type": "config/auth/list"})
+            response = self.ha_connection.SendAndReceiveMsg({"type": "person/list"})
             if not response or not response.get('success', False):
                 err_msg = response.get('error', {}).get('message', 'Unknown Error') if response else 'Timeout Or Disconnected'
                 raise Exception(f"Failed to fetch users from HA WebSocket: {err_msg}")
