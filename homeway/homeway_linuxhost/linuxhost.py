@@ -242,7 +242,7 @@ class LinuxHost(IStateChangeHandler):
             
             # --- SWEETPLACE CLOUD WORKER ---
             privateKey = self.GetPrivateKey()
-            CloudWorkerInstance.Start(self.Logger, pluginId, privateKey)
+            CloudWorkerInstance.Start(self.Logger, pluginId, privateKey, haConnection)
             
             pluginConnectUrl = HostCommon.GetPluginConnectionUrl()
             if devLocalHomewayServerAddress is not None:
