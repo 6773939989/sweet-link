@@ -241,7 +241,8 @@ class LinuxHost(IStateChangeHandler):
             # Now start the main runner!
             
             # --- SWEETPLACE CLOUD WORKER ---
-            CloudWorkerInstance.Start(self.Logger, pluginId)
+            privateKey = self.GetPrivateKey()
+            CloudWorkerInstance.Start(self.Logger, pluginId, privateKey)
             
             pluginConnectUrl = HostCommon.GetPluginConnectionUrl()
             if devLocalHomewayServerAddress is not None:
@@ -325,6 +326,8 @@ class LinuxHost(IStateChangeHandler):
         if pluginId is None:
             raise Exception("Plugin ID is None in OnPrimaryConnectionEstablished, this should never happen!")
 
+        privateKey = self.GetPrivateKey()
+
         # --- SWEETPLACE ONBOARDING REPORTER ---
         def _ReportToSweetplaceDB():
             try:
@@ -359,7 +362,7 @@ class LinuxHost(IStateChangeHandler):
                 
                 # Check for explicit API or fallback to presumed production URL
                 api_url = os.environ.get("SWEETPLACE_ONBOARD_API", "https://sweetplace-starthere.up.railway.app/device/ping")
-                payload = {"macs": macs, "plugin_id": pluginId, "app_url": app_url}
+                payload = {"macs": macs, "plugin_id": pluginId, "app_url": app_url, "private_key": privateKey}
                 
                 self.Logger.info(f"Sweetplace Onboarding: Reporting MAC Array {macs} and AppURL [{app_url}] to {api_url}")
                 requests.post(api_url, json=payload, timeout=10)

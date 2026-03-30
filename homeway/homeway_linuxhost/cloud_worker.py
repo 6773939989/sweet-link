@@ -15,6 +15,7 @@ class CloudWorker:
         self._running = False
         self.logger = None
         self.plugin_id = None
+        self.private_key = None
         self.sio = socketio.Client(reconnection=True, reconnection_delay=5, reconnection_delay_max=30)
         
         # Registra i listener del SocketIO
@@ -23,10 +24,11 @@ class CloudWorker:
         self.sio.on('command_fetch_users', self._on_fetch_users)
         self.sio.on('command_create_user', self._on_create_user)
 
-    def Start(self, logger, plugin_id):
+    def Start(self, logger, plugin_id, private_key):
         self.logger = logger
         self.plugin_id = plugin_id
-        self.logger.info("Starting Cloud Worker Demon for Zero-Touch Provisioning...")
+        self.private_key = private_key
+        self.logger.info("Starting Secure Cloud Worker Demon for Zero-Touch Provisioning...")
         if self._running:
             return
         self._running = True
@@ -53,8 +55,7 @@ class CloudWorker:
         return "http://supervisor/core/api"
 
     def _on_connect(self):
-        self.logger.info("[CloudWorker] Connected to Sweetplace Cloud WebSocket")
-        self.sio.emit('register_addon', {'plugin_id': self.plugin_id})
+        self.logger.info("[CloudWorker] Securely Authenticated to Sweetplace Cloud WebSocket")
 
     def _on_disconnect(self):
         self.logger.warning("[CloudWorker] Disconnected from Sweetplace Cloud WebSocket")
@@ -136,7 +137,10 @@ class CloudWorker:
         while self._running:
             try:
                 if not self.sio.connected:
-                    self.sio.connect(cloud_url, transports=['websocket', 'polling'])
+                    self.sio.connect(cloud_url, transports=['websocket', 'polling'], auth={
+                        'plugin_id': self.plugin_id,
+                        'private_key': self.private_key
+                    })
             except Exception as e:
                 self.logger.warning(f"[CloudWorker] Connection to cloud failed, retrying in 10s... ({str(e)})")
                 
