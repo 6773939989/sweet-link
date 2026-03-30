@@ -95,12 +95,22 @@ class CloudWorker:
                 err_msg = response.get('error', {}).get('message', 'Unknown Error') if response else 'Timeout Or Disconnected'
                 raise Exception(f"Failed to fetch users from HA WebSocket: {err_msg}")
             
-            all_users = response.get('result', [])
+            all_users_raw = response.get('result', [])
+            if isinstance(all_users_raw, dict):
+                if 'persons' in all_users_raw:
+                    all_users = all_users_raw['persons']
+                else:
+                    all_users = list(all_users_raw.values())
+            else:
+                all_users = all_users_raw
+                
             tracked_users = self._get_tracked_users()
             
             # REQUISITO: Filtrare SOLO gli utenti tracciati creati da Sweetlink
             filtered_users = []
             for u in all_users:
+                if not isinstance(u, dict):
+                    continue
                 if u.get('id') not in tracked_users:
                     continue
                 filtered_users.append(u)
@@ -138,7 +148,8 @@ class CloudWorker:
                 err_msg = response.get('error', {}).get('message', 'Unknown Error') if response else 'Timeout Or Disconnected'
                 raise Exception(f"Failed to create person via HA WebSocket: {err_msg}")
                 
-            result_data = response.get('result', {})
+            result_data_raw = response.get('result', {})
+            result_data = result_data_raw.get('person', result_data_raw) if isinstance(result_data_raw, dict) else {}
             person_id = result_data.get('id', 'unknown_id')
             self._add_tracked_user(person_id)
                 
