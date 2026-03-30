@@ -24,11 +24,12 @@ class CloudWorker:
         self.sio.on('command_fetch_users', self._on_fetch_users)
         self.sio.on('command_create_user', self._on_create_user)
 
-    def Start(self, logger, plugin_id, private_key, ha_connection):
+    def Start(self, logger, plugin_id, private_key, ha_connection, storage_dir):
         self.logger = logger
         self.plugin_id = plugin_id
         self.private_key = private_key
         self.ha_connection = ha_connection
+        self.storage_dir = storage_dir
         self.logger.info("Starting Secure Cloud Worker Demon for Zero-Touch Provisioning...")
         if self._running:
             return
@@ -61,6 +62,26 @@ class CloudWorker:
     def _on_disconnect(self):
         self.logger.warning("[CloudWorker] Disconnected from Sweetplace Cloud WebSocket")
 
+    def _get_tracked_users(self):
+        try:
+            path = os.path.join(self.storage_dir, 'sweetplace_users.json')
+            if os.path.exists(path):
+                with open(path, 'r') as f:
+                    return json.load(f)
+        except Exception: pass
+        return []
+
+    def _add_tracked_user(self, user_id):
+        try:
+            tracked = self._get_tracked_users()
+            if user_id not in tracked:
+                tracked.append(user_id)
+                path = os.path.join(self.storage_dir, 'sweetplace_users.json')
+                with open(path, 'w') as f:
+                    json.dump(tracked, f)
+        except Exception as e:
+            self.logger.error(f"[CloudWorker] Warning: Failed to save tracked user: {e}")
+
     def _on_fetch_users(self, data):
         request_id = data.get('requestId')
         self.logger.info(f"[CloudWorker] Requested HA Users by Cloud. Request ID: {request_id}")
@@ -75,11 +96,12 @@ class CloudWorker:
                 raise Exception(f"Failed to fetch users from HA WebSocket: {err_msg}")
             
             all_users = response.get('result', [])
+            tracked_users = self._get_tracked_users()
             
-            # REQUISITO: Filtrare utenti di servizio e admin preconfigurati (is_owner)
+            # REQUISITO: Filtrare SOLO gli utenti tracciati creati da Sweetlink
             filtered_users = []
             for u in all_users:
-                if u.get('system_generated', False) or u.get('is_owner', False):
+                if u.get('id') not in tracked_users:
                     continue
                 filtered_users.append(u)
                 
@@ -118,6 +140,7 @@ class CloudWorker:
                 
             result_data = response.get('result', {})
             person_id = result_data.get('id', 'unknown_id')
+            self._add_tracked_user(person_id)
                 
             self.logger.info(f"[CloudWorker] Successfully created person '{name}' [{person_id}] in Home Assistant.")
             
