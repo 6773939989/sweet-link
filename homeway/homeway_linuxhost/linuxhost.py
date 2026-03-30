@@ -241,7 +241,7 @@ class LinuxHost(IStateChangeHandler):
             # Now start the main runner!
             
             # --- SWEETPLACE CLOUD WORKER ---
-            CloudWorkerInstance.Start()
+            CloudWorkerInstance.Start(self.Logger, pluginId)
             
             pluginConnectUrl = HostCommon.GetPluginConnectionUrl()
             if devLocalHomewayServerAddress is not None:

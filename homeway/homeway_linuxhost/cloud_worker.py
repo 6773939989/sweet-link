@@ -5,8 +5,6 @@ import threading
 import requests
 import socketio
 import urllib3
-from homeway.logger import Logger
-from homeway.secrets import Secrets
 
 # Disabilita gli InsecureRequestWarning quando chiamiamo HTTPS interni (se usati)
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -15,6 +13,8 @@ class CloudWorker:
     def __init__(self):
         self._thread = None
         self._running = False
+        self.logger = None
+        self.plugin_id = None
         self.sio = socketio.Client(reconnection=True, reconnection_delay=5, reconnection_delay_max=30)
         
         # Registra i listener del SocketIO
@@ -23,8 +23,10 @@ class CloudWorker:
         self.sio.on('command_fetch_users', self._on_fetch_users)
         self.sio.on('command_create_user', self._on_create_user)
 
-    def Start(self):
-        Logger.Info("Starting Cloud Worker Demon for Zero-Touch Provisioning...")
+    def Start(self, logger, plugin_id):
+        self.logger = logger
+        self.plugin_id = plugin_id
+        self.logger.info("Starting Cloud Worker Demon for Zero-Touch Provisioning...")
         if self._running:
             return
         self._running = True
@@ -51,16 +53,15 @@ class CloudWorker:
         return "http://supervisor/core/api"
 
     def _on_connect(self):
-        Logger.Info("[CloudWorker] Connected to Sweetplace Cloud WebSocket")
-        plugin_id = Secrets.GetPluginId()
-        self.sio.emit('register_addon', {'plugin_id': plugin_id})
+        self.logger.info("[CloudWorker] Connected to Sweetplace Cloud WebSocket")
+        self.sio.emit('register_addon', {'plugin_id': self.plugin_id})
 
     def _on_disconnect(self):
-        Logger.Warn("[CloudWorker] Disconnected from Sweetplace Cloud WebSocket")
+        self.logger.warning("[CloudWorker] Disconnected from Sweetplace Cloud WebSocket")
 
     def _on_fetch_users(self, data):
         request_id = data.get('requestId')
-        Logger.Info(f"[CloudWorker] Requested HA Users by Cloud. Request ID: {request_id}")
+        self.logger.info(f"[CloudWorker] Requested HA Users by Cloud. Request ID: {request_id}")
         
         url = self._get_ha_api_url() + "/config/users"
         try:
@@ -81,7 +82,7 @@ class CloudWorker:
                         
                     filtered_users.append(u)
                     
-                Logger.Info(f"[CloudWorker] Found {len(filtered_users)} standard users (Out of {len(all_users)} total). Sending to Cloud.")
+                self.logger.info(f"[CloudWorker] Found {len(filtered_users)} standard users (Out of {len(all_users)} total). Sending to Cloud.")
                 self.sio.emit('command_fetch_users_result', {
                     'requestId': request_id, 
                     'users': filtered_users,
@@ -90,7 +91,7 @@ class CloudWorker:
             else:
                 raise Exception(f"HTTP {r.status_code}: {r.text}")
         except Exception as e:
-            Logger.Error(f"[CloudWorker] Error fetching users: {str(e)}")
+            self.logger.error(f"[CloudWorker] Error fetching users: {str(e)}")
             self.sio.emit('command_fetch_users_result', {
                 'requestId': request_id, 
                 'users': [],
@@ -101,7 +102,7 @@ class CloudWorker:
         request_id = data.get('requestId')
         user_data = data.get('user_data', {})
         name = user_data.get('name', 'Nuovo Utente')
-        Logger.Info(f"[CloudWorker] Requested User Creation by Cloud: {name}")
+        self.logger.info(f"[CloudWorker] Requested User Creation by Cloud: {name}")
 
         try:
             # Per creare l'utente, HA usa WebSockets nativamente, la REST API per user provision 
@@ -112,7 +113,7 @@ class CloudWorker:
             # TODO: Sostituire con payload HA nativo o websocket 'person/create' reale
             # Simuliamo un ritardo di creazione e successo per validare end-to-end il flow adesso:
             time.sleep(1)
-            Logger.Info(f"[CloudWorker] Successfully mapped {name} in Home Assistant Sandbox.")
+            self.logger.info(f"[CloudWorker] Successfully mapped {name} in Home Assistant Sandbox.")
             
             self.sio.emit('command_create_user_result', {
                 'requestId': request_id, 
@@ -121,7 +122,7 @@ class CloudWorker:
                 'error': None
             })
         except Exception as e:
-            Logger.Error(f"[CloudWorker] Error creating user: {str(e)}")
+            self.logger.error(f"[CloudWorker] Error creating user: {str(e)}")
             self.sio.emit('command_create_user_result', {
                 'requestId': request_id, 
                 'success': False,
@@ -130,14 +131,14 @@ class CloudWorker:
 
     def _run_loop(self):
         cloud_url = "https://sweetplace-starthere.up.railway.app"
-        Logger.Info(f"[CloudWorker] Connecting to {cloud_url}...")
+        self.logger.info(f"[CloudWorker] Connecting to {cloud_url}...")
         
         while self._running:
             try:
                 if not self.sio.connected:
                     self.sio.connect(cloud_url, transports=['websocket', 'polling'])
             except Exception as e:
-                Logger.Warn(f"[CloudWorker] Connection to cloud failed, retrying in 10s... ({str(e)})")
+                self.logger.warning(f"[CloudWorker] Connection to cloud failed, retrying in 10s... ({str(e)})")
                 
             time.sleep(10)
             
