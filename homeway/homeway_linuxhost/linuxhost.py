@@ -31,6 +31,7 @@ from .ha.serverinfo import ServerInfo
 from .ha.serverdiscovery import ServerDiscovery
 from .ha.homecontext import HomeContext
 from .sage.sagehost import SageHost
+from .cloud_worker import CloudWorkerInstance
 
 
 # This file is the main host for the linux service.
@@ -238,6 +239,10 @@ class LinuxHost(IStateChangeHandler):
             self.Sage = SageHost(self.Logger, pluginVersionStr, homeContext, haConnection, sagePrefix, devLocalHomewayServerAddress)
 
             # Now start the main runner!
+            
+            # --- SWEETPLACE CLOUD WORKER ---
+            CloudWorkerInstance.Start()
+            
             pluginConnectUrl = HostCommon.GetPluginConnectionUrl()
             if devLocalHomewayServerAddress is not None:
                 pluginConnectUrl = HostCommon.GetPluginConnectionUrl(fullHostString="ws://"+devLocalHomewayServerAddress)

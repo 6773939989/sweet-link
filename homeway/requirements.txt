@@ -37,4 +37,5 @@ configparser
 wyoming>=1.7.2,<1.8
 zeroconf>=0.136.2,<=0.148.0
 sentry-sdk>=2.44.0,<3
+python-socketio[client]>=5.11.0,<6
 #zstandard <version> - Installed dynamically if the platform supports it.
