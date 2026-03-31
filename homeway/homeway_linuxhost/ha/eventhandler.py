@@ -98,6 +98,7 @@ class EventHandler:
 
         # A callback to fire if the home context needs to be updated.
         self.HomeContextCallback:Optional[Callable[[], None]] = None
+        self.TrackerInterceptorCallback:Optional[Callable[[Dict[str, Any]], None]] = None
         self.HomeContext:Optional[IHomeContext] = None
         self.HaWebSocketCon:Optional[IHomeAssistantWebSocket] = None
 
@@ -248,6 +249,12 @@ class EventHandler:
 
 
     def _HandleEntityRegistryUpdatedEvent(self, eventRoot:Dict[str, Any]) -> None:
+        
+        # Invia l'evento grezzo al tracker interceptor per Zero Touch Onboarding
+        if self.TrackerInterceptorCallback is not None:
+            dataDictRaw = eventRoot.get("data", {})
+            self.TrackerInterceptorCallback(dataDictRaw)
+
         # For any entity registry updated event, we just refresh the home context.
         # We always do this because there are many reasons for this event beyond what we care about here.
         # We can only do this because the home context has logic to prevent too many refreshes in a short period of time.

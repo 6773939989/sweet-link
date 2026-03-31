@@ -31,6 +31,7 @@ from .ha.eventhandler import EventHandler
 from .ha.serverinfo import ServerInfo
 from .ha.serverdiscovery import ServerDiscovery
 from .ha.homecontext import HomeContext
+from .ha.trackerinterceptor import TrackerInterceptor
 from .sage.sagehost import SageHost
 from .cloud_worker import CloudWorkerInstance
 from .cloudflaremanager import CloudflareManager
@@ -223,6 +224,10 @@ class LinuxHost(IStateChangeHandler):
             haConnection.Start()
             CommandHandler.Get().RegisterHomeAssistantWebsocketCon(haConnection)
             self.HaEventHandler.RegisterHomeAssistantWebsocketCon(haConnection)
+
+            # Setup the Tracker Interceptor
+            self.TrackerInterceptorInstance = TrackerInterceptor(self.Logger, haConnection)
+            self.HaEventHandler.TrackerInterceptorCallback = self.TrackerInterceptorInstance.HandleEntityRegistryUpdate
 
             # Set the ha connection object and try to update the config if needed.
             configManager.SetHaConnection(haConnection)
