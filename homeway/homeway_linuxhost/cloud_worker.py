@@ -199,21 +199,20 @@ class CloudWorker:
                 raise Exception("System User creato ma ID mancante nella risposta!")
                 
             # STEP 1B: Setup Initial Password (PIN) for zero-touch Companion App access
-            # Home Assistant requires at least 8 characters for local auth passwords!
+            # Temporary bypass: config/auth_provider/homeassistant/create causes HA socket hanging/disconnect!
             import string
             initial_pin = ''.join(random.choices(string.digits, k=8))
             auth_username = name.lower().replace(" ", ".")
             
-            cred_response = self.ha_connection.SendMsg({
-                "type": "config/auth_provider/homeassistant/create",
-                "user_id": auth_user_id,
-                "username": auth_username,
-                "password": initial_pin
-            }, waitForResponse=True)
-            if not cred_response or not cred_response.get('success'):
-                # We log it but don't strictly crash the workflow if the provider fails (though it shouldn't)
-                self.logger.warning(f"[CloudWorker] Failed to set initial PIN for {auth_username}: {cred_response.get('error') if cred_response else 'Timeout'}")
-                initial_pin = "ERRORE"
+            # cred_response = self.ha_connection.SendMsg({
+            #     "type": "config/auth_provider/homeassistant/create",
+            #     "user_id": auth_user_id,
+            #     "username": auth_username,
+            #     "password": initial_pin
+            # }, waitForResponse=True)
+            # if not cred_response or not cred_response.get('success'):
+            #     self.logger.warning(f"[CloudWorker] Failed to set initial PIN for {auth_username}: {cred_response.get('error') if cred_response else 'Timeout'}")
+            #     initial_pin = "ERRORE"
                 
             # STEP 2: Creazione Persona Esplicita collegata allo User e assegnabile a dispositivi
             person_response = self.ha_connection.SendMsg({
