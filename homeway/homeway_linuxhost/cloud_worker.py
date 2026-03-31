@@ -199,7 +199,9 @@ class CloudWorker:
                 raise Exception("System User creato ma ID mancante nella risposta!")
                 
             # STEP 1B: Setup Initial Password (PIN) for zero-touch Companion App access
-            initial_pin = str(random.randint(100000, 999999))
+            # Home Assistant requires at least 8 characters for local auth passwords!
+            import string
+            initial_pin = ''.join(random.choices(string.digits, k=8))
             auth_username = name.lower().replace(" ", ".")
             
             cred_response = self.ha_connection.SendMsg({
