@@ -106,7 +106,7 @@ class LinuxHost(IStateChangeHandler):
                     self.Logger.info("!!! SWEETPLACE FACTORY RESET REQUESTED !!!")
                     self.Logger.info(f"Current Plugin ID before wipe: {old_id}")
                     
-                    import os, shutil
+                    import shutil
                     for filename in os.listdir(storageDir):
                         if filename != "options.json":
                             file_path = os.path.join(storageDir, filename)
