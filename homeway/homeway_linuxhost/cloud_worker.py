@@ -282,17 +282,45 @@ class CloudWorker:
                 raise Exception("HA WebSocket non inizializzato")
                 
             self.logger.info('Purging Person Layer...')
-            self.ha_connection.SendAndReceiveMsg({
+            p_resp = self.ha_connection.SendAndReceiveMsg({
                 "type": "person/delete",
                 "person_id": person_id
             })
+            if not p_resp or not p_resp.get('success'):
+                err_msg = p_resp.get('error', {}) if p_resp else 'Timeout Person'
+                self.logger.error(f"Failed to delete Person {person_id}: {err_msg}")
 
             if auth_id:
                 self.logger.info('Purging System Auth Layer...')
-                self.ha_connection.SendAndReceiveMsg({
+                u_resp = self.ha_connection.SendAndReceiveMsg({
                     "type": "config/auth/delete",
                     "user_id": auth_id
                 })
+                if not u_resp or not u_resp.get('success'):
+                    err_msg = u_resp.get('error', {}) if u_resp else 'Timeout Auth'
+                    raise Exception(f"Failed to delete System User: {err_msg}")
+            else:
+                self.logger.warning(f"No auth_id provided for {person_id}. Attempting fallback lookup via config/auth/list...")
+                # Fallback to search by name or ID
+                a_resp = self.ha_connection.SendAndReceiveMsg({"type": "config/auth/list"})
+                if a_resp and a_resp.get('success'):
+                    # The name is often identical to the person ID string or name slug
+                    found = False
+                    for usr in a_resp.get('result', []):
+                        if usr.get('name', '').lower() == str(person_id).replace('_', ' ').lower() or usr.get('id') == person_id:
+                            self.logger.info(f"Fallback found matching user: {usr.get('name')} ({usr.get('id')}). Purging...")
+                            fallback_u_resp = self.ha_connection.SendAndReceiveMsg({
+                                "type": "config/auth/delete",
+                                "user_id": usr.get('id')
+                            })
+                            if not fallback_u_resp or not fallback_u_resp.get('success'):
+                                raise Exception(f"Fallback delete failed: {fallback_u_resp.get('error') if fallback_u_resp else 'Timeout'}")
+                            found = True
+                            break
+                    if not found:
+                        self.logger.warning(f"Could not find matching System User for {person_id}. It might have been already deleted.")
+                else:
+                    self.logger.error("Could not fetch user list for fallback delete.")
 
             self._remove_tracked_user(person_id)
             self.logger.info(f"[CloudWorker] Successfully expunged {person_id}")
