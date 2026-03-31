@@ -103,32 +103,38 @@ class CloudWorker:
             if not self.ha_connection:
                 raise Exception("HA WebSocket non inizializzato nel Worker")
                 
-            response = self.ha_connection.SendAndReceiveMsg({"type": "person/list"})
+            response = self.ha_connection.SendAndReceiveMsg({"type": "get_states"})
             if not response or not response.get('success', False):
                 err_msg = response.get('error', {}).get('message', 'Unknown Error') if response else 'Timeout Or Disconnected'
-                raise Exception(f"Failed to fetch persons from HA WebSocket: {err_msg}")
+                raise Exception(f"Failed to fetch states from HA WebSocket: {err_msg}")
             
-            all_persons = response.get('result', [])
-            if isinstance(all_persons, dict):
-                # HA occasionally returns dicts for single results or legacy endpoints
-                all_persons = list(all_persons.values())
-            elif not isinstance(all_persons, list):
-                all_persons = []
+            all_states = response.get('result', [])
+            if isinstance(all_states, dict):
+                all_states = list(all_states.values())
+            elif not isinstance(all_states, list):
+                all_states = []
                 
             tracked_users = self._get_tracked_users()
             filtered_users = []
             
-            for p in all_persons:
-                if not isinstance(p, dict): continue
+            for state_obj in all_states:
+                if not isinstance(state_obj, dict): continue
                 
-                person_id = p.get('id')
-                if not person_id or person_id not in tracked_users:
+                entity_id = state_obj.get('entity_id', '')
+                if not str(entity_id).startswith('person.'): continue
+                
+                attrs = state_obj.get('attributes', {})
+                person_id = attrs.get('id') or attrs.get('user_id') or entity_id
+                friendly_name = attrs.get('friendly_name', entity_id)
+                
+                if person_id not in tracked_users:
                     continue
                     
                 filtered_users.append({
                     "id": person_id,
-                    "auth_id": p.get('user_id'),
-                    "name": p.get('name', 'Utente Sconosciuto')
+                    "auth_id": attrs.get('user_id'),
+                    "name": friendly_name,
+                    "entity_id": entity_id
                 })
                 
             self.logger.info(f"[CloudWorker] Found {len(filtered_users)} standard users. Sending to Cloud.")

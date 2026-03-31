@@ -293,8 +293,8 @@ class Connection(IHomeAssistantWebSocket):
                 # Send an empty dict to indicate success.
                 return {}
 
-            # Wait for the response.
-            if pendingContext.Event.wait(10.0) is False:
+            # Wait for the response. (Increased from 10.0s to 30.0s for massive get_states dumps)
+            if pendingContext.Event.wait(30.0) is False:
                 # Timeout, return false.
                 return None
 
