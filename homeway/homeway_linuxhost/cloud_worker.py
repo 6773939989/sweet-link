@@ -4,6 +4,7 @@ import json
 import threading
 import requests
 import socketio
+import random
 import urllib3
 
 # Disabilita gli InsecureRequestWarning quando chiamiamo HTTPS interni (se usati)
@@ -197,6 +198,21 @@ class CloudWorker:
             if not auth_user_id:
                 raise Exception("System User creato ma ID mancante nella risposta!")
                 
+            # STEP 1B: Setup Initial Password (PIN) for zero-touch Companion App access
+            initial_pin = str(random.randint(100000, 999999))
+            auth_username = name.lower().replace(" ", ".")
+            
+            cred_response = self.ha_connection.SendAndReceiveMsg({
+                "type": "config/auth_provider/homeassistant/create",
+                "user_id": auth_user_id,
+                "username": auth_username,
+                "password": initial_pin
+            })
+            if not cred_response or not cred_response.get('success'):
+                # We log it but don't strictly crash the workflow if the provider fails (though it shouldn't)
+                self.logger.warning(f"[CloudWorker] Failed to set initial PIN for {auth_username}: {cred_response.get('error') if cred_response else 'Timeout'}")
+                initial_pin = "ERRORE"
+                
             # STEP 2: Creazione Persona Esplicita collegata allo User e assegnabile a dispositivi
             person_response = self.ha_connection.SendAndReceiveMsg({
                 "type": "person/create",
@@ -221,7 +237,7 @@ class CloudWorker:
             self.sio.emit('command_create_user_result', {
                 'requestId': request_id, 
                 'success': True,
-                'result': {'name': name, 'id': person_id},
+                'result': {'name': name, 'id': person_id, 'username': auth_username, 'pin': initial_pin},
                 'error': None
             })
         except Exception as e:
