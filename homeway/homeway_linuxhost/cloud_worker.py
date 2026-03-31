@@ -181,11 +181,11 @@ class CloudWorker:
                 raise Exception("HA WebSocket Auth is still pending or Offline.")
                 
             # STEP 1: Creazione Utente di Sistema (NON Amministratore)
-            auth_response = self.ha_connection.SendAndReceiveMsg({
+            auth_response = self.ha_connection.SendMsg({
                 "type": "config/auth/create",
                 "name": name,
                 "group_ids": ["system-users"]
-            })
+            }, waitForResponse=True)
             
             if not auth_response or not auth_response.get('success', False):
                 err_msg = auth_response.get('error', {}).get('message', 'Unknown Error') if auth_response else 'Timeout Or Disconnected'
@@ -202,24 +202,24 @@ class CloudWorker:
             initial_pin = str(random.randint(100000, 999999))
             auth_username = name.lower().replace(" ", ".")
             
-            cred_response = self.ha_connection.SendAndReceiveMsg({
+            cred_response = self.ha_connection.SendMsg({
                 "type": "config/auth_provider/homeassistant/create",
                 "user_id": auth_user_id,
                 "username": auth_username,
                 "password": initial_pin
-            })
+            }, waitForResponse=True)
             if not cred_response or not cred_response.get('success'):
                 # We log it but don't strictly crash the workflow if the provider fails (though it shouldn't)
                 self.logger.warning(f"[CloudWorker] Failed to set initial PIN for {auth_username}: {cred_response.get('error') if cred_response else 'Timeout'}")
                 initial_pin = "ERRORE"
                 
             # STEP 2: Creazione Persona Esplicita collegata allo User e assegnabile a dispositivi
-            person_response = self.ha_connection.SendAndReceiveMsg({
+            person_response = self.ha_connection.SendMsg({
                 "type": "person/create",
                 "name": name,
                 "user_id": auth_user_id,
                 "device_trackers": []
-            })
+            }, waitForResponse=True)
             
             if not person_response or not person_response.get('success', False):
                 err_msg = person_response.get('error', {}).get('message', 'Unknown Error') if person_response else 'Timeout Or Disconnected'
