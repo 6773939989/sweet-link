@@ -253,15 +253,13 @@ class LinuxHost(IStateChangeHandler):
             
             # --- SWEETPLACE CLOUDFLARE MANAGER ---
             # Start the manager thread that requests the JWT Token and spawns cloudflared
+            # We pass the plugin_id so the backend can resolve the correct MAC/tunnel.
+            # Using uuid.getnode() was unreliable on multi-NIC devices (picked wrong MAC).
             apiURLString = os.environ.get("SWEETPLACE_ONBOARD_API", "https://sweetplace-starthere.up.railway.app/device/ping")
             baseApiUrl = apiURLString.rsplit('/device', 1)[0]
             
-            import uuid
-            mac_num = hex(uuid.getnode()).replace('0x', '').upper()
-            fallback_mac = ':'.join(mac_num[i : i + 2] for i in range(0, 11, 2)).zfill(17)
-            
             self.CloudflareInstance = CloudflareManager(self.Logger)
-            self.CloudflareInstance.Start(baseApiUrl, fallback_mac)
+            self.CloudflareInstance.Start(baseApiUrl, plugin_id=pluginId)
             
             
             pluginConnectUrl = HostCommon.GetPluginConnectionUrl()

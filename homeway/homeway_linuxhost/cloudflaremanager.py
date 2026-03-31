@@ -28,6 +28,7 @@ class CloudflareManager:
         self.Subprocess = None
         
         self.MacAddress = None
+        self.PluginId = None
         self.ApiUrl = None
         
         self._shutdown_event = threading.Event()
@@ -35,16 +36,17 @@ class CloudflareManager:
         # Verify binary exists (downloaded by Dockerfile)
         self.BinaryPath = "/usr/local/bin/cloudflared"
 
-    def Start(self, api_url: str, mac_address: str):
+    def Start(self, api_url: str, mac_address: str = None, plugin_id: str = None):
         with self.Lock:
             if self.Thread is not None:
                 return
             
-            self.MacAddress = mac_address
-            if not self.MacAddress:
-                self.Logger.error("[CloudflareManager] Cannot start without a valid MAC address")
+            if not mac_address and not plugin_id:
+                self.Logger.error("[CloudflareManager] Cannot start without a mac_address or plugin_id")
                 return
-
+            
+            self.MacAddress = mac_address
+            self.PluginId = plugin_id
             self.ApiUrl = api_url
             self.Status = CloudflareStatus.REQUESTING_TOKEN
             self._shutdown_event.clear()
@@ -135,7 +137,13 @@ class CloudflareManager:
         endpoint = f"{self.ApiUrl}/api/cloudflare/provision"
         
         try:
-            res = requests.post(endpoint, json={"mac_address": self.MacAddress}, timeout=15)
+            # Prefer plugin_id over mac_address for multi-NIC reliability
+            if self.PluginId:
+                payload = {"plugin_id": self.PluginId}
+            else:
+                payload = {"mac_address": self.MacAddress}
+            
+            res = requests.post(endpoint, json=payload, timeout=15)
             if res.status_code == 200:
                 data = res.json()
                 return data.get("token", "")
