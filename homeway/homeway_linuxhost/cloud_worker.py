@@ -90,31 +90,37 @@ class CloudWorker:
             if not self.ha_connection:
                 raise Exception("HA WebSocket non inizializzato nel Worker")
                 
-            response = self.ha_connection.SendAndReceiveMsg({"type": "config/auth/list"})
+            response = self.ha_connection.SendAndReceiveMsg({"type": "get_states"})
             if not response or not response.get('success', False):
                 err_msg = response.get('error', {}).get('message', 'Unknown Error') if response else 'Timeout Or Disconnected'
-                raise Exception(f"Failed to fetch users from HA WebSocket: {err_msg}")
+                raise Exception(f"Failed to fetch states from HA WebSocket: {err_msg}")
             
-            all_users = response.get('result', [])
-            if not isinstance(all_users, list):
-                all_users = []
+            all_states = response.get('result', [])
+            if isinstance(all_states, dict):
+                all_states = list(all_states.values())
+            elif not isinstance(all_states, list):
+                all_states = []
                 
             tracked_users = self._get_tracked_users()
             filtered_users = []
             
-            for u in all_users:
-                if not isinstance(u, dict): continue
+            for state_obj in all_states:
+                if not isinstance(state_obj, dict): continue
                 
-                user_id = u.get('id')
-                friendly_name = u.get('name', 'Sconosciuto')
+                entity_id = state_obj.get('entity_id', '')
+                if not str(entity_id).startswith('person.'): continue
                 
-                if user_id not in tracked_users:
+                attrs = state_obj.get('attributes', {})
+                person_id = attrs.get('id') or attrs.get('user_id') or entity_id
+                friendly_name = attrs.get('friendly_name', entity_id)
+                
+                if person_id not in tracked_users:
                     continue
                     
                 filtered_users.append({
-                    "id": user_id,
+                    "id": person_id,
                     "name": friendly_name,
-                    "entity_id": f"user.{user_id}"
+                    "entity_id": entity_id
                 })
                 
             self.logger.info(f"[CloudWorker] Found {len(filtered_users)} standard users. Sending to Cloud.")
@@ -141,21 +147,44 @@ class CloudWorker:
             if not self.ha_connection:
                 raise Exception("HA WebSocket non inizializzato")
                 
-            response = self.ha_connection.SendAndReceiveMsg({
+            # STEP 1: Creazione Utente di Sistema (NON Amministratore)
+            auth_response = self.ha_connection.SendAndReceiveMsg({
                 "type": "config/auth/create",
-                "name": name
+                "name": name,
+                "group_ids": ["system-users"]
             })
             
-            if not response or not response.get('success', False):
-                err_msg = response.get('error', {}).get('message', 'Unknown Error') if response else 'Timeout Or Disconnected'
-                raise Exception(f"Failed to create user via HA WebSocket: {err_msg}")
+            if not auth_response or not auth_response.get('success', False):
+                err_msg = auth_response.get('error', {}).get('message', 'Unknown Error') if auth_response else 'Timeout Or Disconnected'
+                raise Exception(f"Failed to create System User via HA WebSocket: {err_msg}")
                 
-            result_data_raw = response.get('result', {})
-            result_data = result_data_raw.get('user', result_data_raw) if isinstance(result_data_raw, dict) else {}
-            person_id = result_data.get('id', 'unknown_id')
+            auth_result_raw = auth_response.get('result', {})
+            user_data = auth_result_raw.get('user', auth_result_raw) if isinstance(auth_result_raw, dict) else {}
+            auth_user_id = user_data.get('id')
+            
+            if not auth_user_id:
+                raise Exception("System User creato ma ID mancante nella risposta!")
+                
+            # STEP 2: Creazione Persona Esplicita collegata allo User e assegnabile a dispositivi
+            person_response = self.ha_connection.SendAndReceiveMsg({
+                "type": "person/create",
+                "name": name,
+                "user_id": auth_user_id,
+                "device_trackers": []
+            })
+            
+            if not person_response or not person_response.get('success', False):
+                err_msg = person_response.get('error', {}).get('message', 'Unknown Error') if person_response else 'Timeout Or Disconnected'
+                raise Exception(f"Auth Success, but Person creation via HA WebSocket failed: {err_msg}")
+                
+            person_result_raw = person_response.get('result', {})
+            person_data = person_result_raw.get('person', person_result_raw) if isinstance(person_result_raw, dict) else {}
+            person_id = person_data.get('id', auth_user_id) # Fallback su auth id
+            
+            # Tracciamo l'ID persona generato
             self._add_tracked_user(person_id)
                 
-            self.logger.info(f"[CloudWorker] Successfully created person '{name}' [{person_id}] in Home Assistant.")
+            self.logger.info(f"[CloudWorker] Successfully orchestrated User '{name}' -> Person '{person_id}' in HA.")
             
             self.sio.emit('command_create_user_result', {
                 'requestId': request_id, 
