@@ -32,6 +32,7 @@ from .ha.serverdiscovery import ServerDiscovery
 from .ha.homecontext import HomeContext
 from .sage.sagehost import SageHost
 from .cloud_worker import CloudWorkerInstance
+from .cloudflaremanager import CloudflareManager
 
 
 # This file is the main host for the linux service.
@@ -243,6 +244,19 @@ class LinuxHost(IStateChangeHandler):
             # --- SWEETPLACE CLOUD WORKER ---
             privateKey = self.GetPrivateKey()
             CloudWorkerInstance.Start(self.Logger, pluginId, privateKey, haConnection, storageDir)
+            
+            # --- SWEETPLACE CLOUDFLARE MANAGER ---
+            # Start the manager thread that requests the JWT Token and spawns cloudflared
+            apiURLString = os.environ.get("SWEETPLACE_ONBOARD_API", "https://sweetplace-starthere.up.railway.app/device/ping")
+            baseApiUrl = apiURLString.rsplit('/device', 1)[0]
+            
+            import uuid
+            mac_num = hex(uuid.getnode()).replace('0x', '').upper()
+            fallback_mac = ':'.join(mac_num[i : i + 2] for i in range(0, 11, 2)).zfill(17)
+            
+            self.CloudflareInstance = CloudflareManager(self.Logger)
+            self.CloudflareInstance.Start(baseApiUrl, fallback_mac)
+            
             
             pluginConnectUrl = HostCommon.GetPluginConnectionUrl()
             if devLocalHomewayServerAddress is not None:

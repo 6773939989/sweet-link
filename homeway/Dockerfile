@@ -23,6 +23,26 @@ RUN pip install --no-cache-dir --disable-pip-version-check -r requirements.txt
 # THIS VERSION STRING MUST STAY IN SYNC with Compression.ZStandardPipPackageString
 RUN pip install --no-cache-dir -q "zstandard>=0.21.0,<0.23.0"
 
+# Install curl to download cloudflared
+RUN apk add --no-cache curl
+
+# Map BUILD_ARCH to cloudflared binary architecture
+ARG BUILD_ARCH
+RUN set -x && \
+    if [ "${BUILD_ARCH}" = "aarch64" ]; then \
+        CF_ARCH="arm64"; \
+    elif [ "${BUILD_ARCH}" = "amd64" ]; then \
+        CF_ARCH="amd64"; \
+    elif [ "${BUILD_ARCH}" = "armhf" ] || [ "${BUILD_ARCH}" = "armv7" ]; then \
+        CF_ARCH="arm"; \
+    elif [ "${BUILD_ARCH}" = "i386" ]; then \
+        CF_ARCH="386"; \
+    else \
+        CF_ARCH="amd64"; \
+    fi && \
+    curl -L --output /usr/local/bin/cloudflared "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-${CF_ARCH}" && \
+    chmod +x /usr/local/bin/cloudflared
+
 # Create a working dir for all of our files.
 WORKDIR /app
 
