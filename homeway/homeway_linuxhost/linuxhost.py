@@ -356,8 +356,8 @@ class LinuxHost(IStateChangeHandler):
                 # Wait 5 seconds to ensure Homeway has registered our connection internally
                 time.sleep(5.0)
                 
-                # Set the Zero-Touch URL layout automatically using the pre-assigned pluginId
-                app_url = f"https://{pluginId}.homeway.io"
+                # Submit an empty URL to let the cloud backend preserve any pre-configured custom tunnel domain (Zero-Touch AppURL)
+                app_url = ""
                 
                 # Check for explicit API or fallback to presumed production URL
                 api_url = os.environ.get("SWEETPLACE_ONBOARD_API", "https://sweetplace-starthere.up.railway.app/device/ping")
