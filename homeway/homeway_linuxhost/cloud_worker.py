@@ -23,6 +23,8 @@ class CloudWorker:
         self.sio.on('disconnect', self._on_disconnect)
         self.sio.on('command_fetch_users', self._on_fetch_users)
         self.sio.on('command_create_user', self._on_create_user)
+        self.sio.on('command_update_user', self._on_update_user)
+        self.sio.on('command_delete_user', self._on_delete_user)
 
     def Start(self, logger, plugin_id, private_key, ha_connection, storage_dir):
         self.logger = logger
@@ -82,6 +84,17 @@ class CloudWorker:
         except Exception as e:
             self.logger.error(f"[CloudWorker] Warning: Failed to save tracked user: {e}")
 
+    def _remove_tracked_user(self, user_id):
+        try:
+            tracked = self._get_tracked_users()
+            if user_id in tracked:
+                tracked.remove(user_id)
+                path = os.path.join(self.storage_dir, 'sweetplace_users.json')
+                with open(path, 'w') as f:
+                    json.dump(tracked, f)
+        except Exception as e:
+            self.logger.error(f"[CloudWorker] Warning: Failed to remove tracked user: {e}")
+
     def _on_fetch_users(self, data):
         request_id = data.get('requestId')
         self.logger.info(f"[CloudWorker] Requested HA Users by Cloud. Request ID: {request_id}")
@@ -119,6 +132,7 @@ class CloudWorker:
                     
                 filtered_users.append({
                     "id": person_id,
+                    "auth_id": attrs.get('user_id'),
                     "name": friendly_name,
                     "entity_id": entity_id
                 })
@@ -198,6 +212,80 @@ class CloudWorker:
                 'requestId': request_id, 
                 'success': False,
                 'error': str(e)
+            })
+
+    def _on_update_user(self, data):
+        request_id = data.get('requestId')
+        person_id = data.get('person_id')
+        auth_id = data.get('auth_id')
+        new_name = data.get('new_name', '')
+        self.logger.info(f"[CloudWorker] Requested User Update: {person_id} -> {new_name}")
+
+        try:
+            if not self.ha_connection:
+                raise Exception("HA WebSocket non inizializzato")
+            
+            # Auth alias update
+            if auth_id:
+                self.ha_connection.SendAndReceiveMsg({
+                    "type": "config/auth/update",
+                    "user_id": auth_id,
+                    "name": new_name
+                })
+            
+            # Person layer update
+            person_response = self.ha_connection.SendAndReceiveMsg({
+                "type": "person/update",
+                "person_id": person_id,
+                "name": new_name
+            })
+            
+            if not person_response or not person_response.get('success', False):
+                err_msg = person_response.get('error', {}).get('message', 'Unknown Error') if person_response else 'Timeout'
+                raise Exception(f"Failed to update User via HA WebSocket: {err_msg}")
+
+            self.sio.emit('command_update_user_result', {
+                'requestId': request_id, 'success': True, 'error': None
+            })
+        except Exception as e:
+            self.logger.error(f"[CloudWorker] Error updating user: {str(e)}")
+            self.sio.emit('command_update_user_result', {
+                'requestId': request_id, 'success': False, 'error': str(e)
+            })
+
+    def _on_delete_user(self, data):
+        request_id = data.get('requestId')
+        person_id = data.get('person_id')
+        auth_id = data.get('auth_id')
+        self.logger.info(f"[CloudWorker] Requested User Deletion: {person_id} / Auth: {auth_id}")
+
+        try:
+            if not self.ha_connection:
+                raise Exception("HA WebSocket non inizializzato")
+                
+            self.logger.info('Purging Person Layer...')
+            self.ha_connection.SendAndReceiveMsg({
+                "type": "person/delete",
+                "person_id": person_id
+            })
+
+            if auth_id:
+                self.logger.info('Purging System Auth Layer...')
+                self.ha_connection.SendAndReceiveMsg({
+                    "type": "config/auth/delete",
+                    "user_id": auth_id
+                })
+
+            self._remove_tracked_user(person_id)
+            self.logger.info(f"[CloudWorker] Successfully expunged {person_id}")
+
+            self.sio.emit('command_delete_user_result', {
+                'requestId': request_id, 'success': True, 'error': None
+            })
+        except Exception as e:
+            self.logger.error(f"[CloudWorker] Error deleting user: {str(e)}")
+            self.sio.emit('command_delete_user_result', {
+                'requestId': request_id, 'success': False, 'error': str(e)
             })
 
     def _run_loop(self):
