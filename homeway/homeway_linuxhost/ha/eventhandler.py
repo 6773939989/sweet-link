@@ -499,7 +499,7 @@ class EventHandler:
                 return True
             # If the issue is a 400, ignore the issue.
             if result.status_code >= 400 and result.status_code < 500:
-                self.Logger.error(f"Send Change Events failed with client error {result.status_code}, ignoring the issue.")
+                self.Logger.warning(f"Send Change Events failed with client error {result.status_code}, ignoring the issue.")
                 return True
 
             # Throw an error.

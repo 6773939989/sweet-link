@@ -208,6 +208,12 @@ class ServerInfo:
             if response.status_code != 200:
                 logger.info(f"X-Forwarded-For test unexpected status code {response.status_code} at {url}, took {time.time() - start:.3f} sec")
                 return False
+        except requests.exceptions.Timeout:
+            logger.info(f"X-Forwarded-For api test timed out at {url}, assuming False.")
+            return False
+        except requests.exceptions.ConnectionError:
+            logger.info(f"X-Forwarded-For api test connection error at {url}, assuming False.")
+            return False
         except Exception as e:
             Sentry.OnException(f"X-Forwarded-For api test result at {url}", e)
             return False
@@ -233,6 +239,12 @@ class ServerInfo:
             # If we get here, both tests passed!
             logger.info(f"X-Forwarded-For supported by this server and will be used. Took {time.time() - start:.3f} sec")
             return True
+        except requests.exceptions.Timeout:
+            logger.info(f"X-Forwarded-For frontend test timed out at {url}, assuming False.")
+            return False
+        except requests.exceptions.ConnectionError:
+            logger.info(f"X-Forwarded-For frontend test connection error at {url}, assuming False.")
+            return False
         except Exception as e:
             Sentry.OnException(f"X-Forwarded-For frontend test result at {url}", e)
             return False
