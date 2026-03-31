@@ -26,6 +26,7 @@ class CloudWorker:
         self.sio.on('command_create_user', self._on_create_user)
         self.sio.on('command_update_user', self._on_update_user)
         self.sio.on('command_delete_user', self._on_delete_user)
+        self.sio.on('command_set_location', self._on_set_location)
 
     def Start(self, logger, plugin_id, private_key, ha_connection, storage_dir):
         self.logger = logger
@@ -64,6 +65,91 @@ class CloudWorker:
 
     def _on_disconnect(self):
         self.logger.warning("[CloudWorker] Disconnected from Sweetplace Cloud WebSocket")
+
+    def _on_set_location(self, data):
+        """
+        Receives: { lat: float, lon: float, display: str, plugin_id: str }
+        1. Calls HA WebSocket API config/core/update (live, no restart)
+        2. Writes /homeassistant/kasa-gps.yaml   (zone: Home coords)
+        3. Writes /homeassistant/appdaem-gps.yaml (AppDaemon coords)
+        """
+        lat = data.get('lat')
+        lon = data.get('lon')
+        display = data.get('display', '')
+        self.logger.info(f"[CloudWorker] Setting home location: lat={lat}, lon={lon} ({display})")
+
+        errors = []
+
+        # 1 — Live update via HA WebSocket API (no restart needed)
+        try:
+            ha_wait = 0
+            while not getattr(self.ha_connection, 'IsConnected', False) and ha_wait < 10:
+                time.sleep(1)
+                ha_wait += 1
+            if getattr(self.ha_connection, 'IsConnected', False):
+                resp = self.ha_connection.SendAndReceiveMsg({
+                    "type": "config/core/update",
+                    "latitude": lat,
+                    "longitude": lon,
+                })
+                if not resp or not resp.get('success'):
+                    err = resp.get('error', {}).get('message', 'Unknown') if resp else 'Timeout'
+                    self.logger.warning(f"[CloudWorker] HA WebSocket location update warning: {err}")
+                    errors.append(f"HA WS: {err}")
+                else:
+                    self.logger.info("[CloudWorker] HA live location updated via WebSocket.")
+            else:
+                errors.append("HA WS offline")
+        except Exception as e:
+            self.logger.error(f"[CloudWorker] HA WS location error: {e}")
+            errors.append(str(e))
+
+        # 2 — Write /homeassistant/kasa-gps.yaml
+        # This file holds the zone: Home coordinates for configuration.yaml !include
+        try:
+            kasa_path = "/homeassistant/kasa-gps.yaml"
+            kasa_content = (
+                f"# Sweetplace auto-generated — NON MODIFICARE MANUALMENTE\n"
+                f"# Questa è la zona Home/Casa di default.\n"
+                f"# Non rinominare 'Home': è usato da HA per la rilevazione presenza.\n"
+                f"zone:\n"
+                f"  name: Home\n"
+                f"  # Coordinate aggiornate automaticamente da Sweetplace Onboarding\n"
+                f"  latitude: {lat}\n"
+                f"  longitude: {lon}\n"
+                f"  radius: 10\n"
+                f"  icon: mdi:home\n"
+            )
+            with open(kasa_path, 'w') as f:
+                f.write(kasa_content)
+            self.logger.info(f"[CloudWorker] kasa-gps.yaml written: lat={lat}, lon={lon}")
+        except Exception as e:
+            self.logger.error(f"[CloudWorker] kasa-gps.yaml write error: {e}")
+            errors.append(str(e))
+
+        # 3 — Write /homeassistant/appdaem-gps.yaml
+        # AppDaemon reads these coordinates for presence-based automations
+        try:
+            appdaem_path = "/homeassistant/appdaem-gps.yaml"
+            appdaem_content = (
+                f"# Sweetplace auto-generated — NON MODIFICARE MANUALMENTE\n"
+                f"# Coordinate GPS della casa per AppDaemon.\n"
+                f"# Usate dalle app di presenza e automazioni geo-localizzate.\n"
+                f"latitude: {lat}\n"
+                f"longitude: {lon}\n"
+            )
+            with open(appdaem_path, 'w') as f:
+                f.write(appdaem_content)
+            self.logger.info(f"[CloudWorker] appdaem-gps.yaml written: lat={lat}, lon={lon}")
+        except Exception as e:
+            self.logger.error(f"[CloudWorker] appdaem-gps.yaml write error: {e}")
+            errors.append(str(e))
+
+        # Ack to backend
+        self.sio.emit('command_set_location_result', {
+            'success': len(errors) == 0,
+            'error': '; '.join(errors) if errors else None
+        })
 
     def _get_tracked_users(self):
         try:

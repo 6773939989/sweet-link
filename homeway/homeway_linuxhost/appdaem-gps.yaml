@@ -1,0 +1,8 @@
+# Sweetplace auto-generated — NON MODIFICARE MANUALMENTE
+# Coordinate GPS della casa per AppDaemon.
+# Usate dalle app di presenza e automazioni geo-localizzate.
+# Le coordinate qui sotto vengono sovrascritte automaticamente al primo
+# onboarding tramite Sweetplace (Step 2: Indirizzo della casa).
+# Also in kasa-gps.yaml (zone: Home configuration)
+latitude: 0.0000000
+longitude: 0.0000000
