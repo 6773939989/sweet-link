@@ -286,20 +286,19 @@ class CloudWorker:
                 raise Exception("System User creato ma ID mancante nella risposta!")
                 
             # STEP 1B: Setup Initial Password (PIN) for zero-touch Companion App access
-            # Temporary bypass: config/auth_provider/homeassistant/create causes HA socket hanging/disconnect!
             import string
             initial_pin = ''.join(random.choices(string.digits, k=8))
             auth_username = name.lower().replace(" ", ".")
             
-            # cred_response = self.ha_connection.SendMsg({
-            #     "type": "config/auth_provider/homeassistant/create",
-            #     "user_id": auth_user_id,
-            #     "username": auth_username,
-            #     "password": initial_pin
-            # }, waitForResponse=True)
-            # if not cred_response or not cred_response.get('success'):
-            #     self.logger.warning(f"[CloudWorker] Failed to set initial PIN for {auth_username}: {cred_response.get('error') if cred_response else 'Timeout'}")
-            #     initial_pin = "ERRORE"
+            cred_response = self.ha_connection.SendAndReceiveMsg({
+                "type": "config/auth_provider/homeassistant/create",
+                "user_id": auth_user_id,
+                "username": auth_username,
+                "password": initial_pin
+            })
+            if not cred_response or not cred_response.get('success'):
+                self.logger.warning(f"[CloudWorker] Failed to set initial PIN for {auth_username}: {cred_response.get('error') if cred_response else 'Timeout'}")
+                initial_pin = "ERRORE"
                 
             # STEP 2: Creazione Persona Esplicita collegata allo User e assegnabile a dispositivi
             person_response = self.ha_connection.SendMsg({
@@ -458,34 +457,20 @@ class CloudWorker:
             if not getattr(self.ha_connection, 'IsConnected', False):
                 raise Exception("HA WebSocket not connected.")
 
+            # Try standard change password API for the local auth provider
             resp = self.ha_connection.SendAndReceiveMsg({
-                "type": "config/auth/create",  # ensure credentials exist first
-            })
-            # Use admin change password API
-            resp = self.ha_connection.SendAndReceiveMsg({
-                "type": "config/auth_provider/homeassistant/create",
+                "type": "config/auth_provider/homeassistant/change_password",
                 "user_id": auth_id,
-                "username": auth_id,  # will be overridden by HA using existing username
                 "password": password
             })
-            # If credentials already exist, change them instead
-            if resp and not resp.get('success'):
-                err_code = resp.get('error', {}).get('code', '') if resp else ''
-                if 'already_exists' in str(err_code) or 'not_found' not in str(err_code):
-                    # Try admin_change_password
-                    resp2 = self.ha_connection.SendAndReceiveMsg({
-                        "type": "config/auth_provider/homeassistant/change_password",
-                        "user_id": auth_id,
-                        "password": password
-                    })
-                    if not resp2 or not resp2.get('success'):
-                        # Final fallback: admin override
-                        resp2 = self.ha_connection.SendAndReceiveMsg({
-                            "type": "auth/admin_change_password",
-                            "user_id": auth_id,
-                            "password": password
-                        })
-                    resp = resp2
+            
+            # If it fails, fallback to admin change password
+            if not resp or not resp.get('success'):
+                resp = self.ha_connection.SendAndReceiveMsg({
+                    "type": "auth/admin_change_password",
+                    "user_id": auth_id,
+                    "password": password
+                })
 
             if not resp or not resp.get('success'):
                 err_msg = resp.get('error', {}).get('message', 'Unknown') if resp else 'Timeout'
