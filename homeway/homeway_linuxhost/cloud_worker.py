@@ -27,6 +27,7 @@ class CloudWorker:
         self.sio.on('command_update_user', self._on_update_user)
         self.sio.on('command_delete_user', self._on_delete_user)
         self.sio.on('command_set_location', self._on_set_location)
+        self.sio.on('command_generate_password', self._on_generate_password)
 
     def Start(self, logger, plugin_id, private_key, ha_connection, storage_dir):
         self.logger = logger
@@ -436,6 +437,65 @@ class CloudWorker:
             self.sio.emit('command_delete_user_result', {
                 'requestId': request_id, 'success': False, 'error': str(e)
             })
+
+    def _on_generate_password(self, data):
+        """
+        Receives: { reqId, auth_id, password }
+        Calls HA: auth/admin_change_password to set a new password for the user
+        Acks back: command_generate_password_result { reqId, success, error }
+        """
+        req_id = data.get('reqId')
+        auth_id = data.get('auth_id')
+        password = data.get('password')
+        self.logger.info(f"[CloudWorker] Generating one-time password for auth_id={auth_id}, reqId={req_id}")
+        try:
+            if not self.ha_connection:
+                raise Exception("HA WebSocket non inizializzato")
+            wait_time = 0
+            while not getattr(self.ha_connection, 'IsConnected', False) and wait_time < 10:
+                time.sleep(1)
+                wait_time += 1
+            if not getattr(self.ha_connection, 'IsConnected', False):
+                raise Exception("HA WebSocket not connected.")
+
+            resp = self.ha_connection.SendAndReceiveMsg({
+                "type": "config/auth/create",  # ensure credentials exist first
+            })
+            # Use admin change password API
+            resp = self.ha_connection.SendAndReceiveMsg({
+                "type": "config/auth_provider/homeassistant/create",
+                "user_id": auth_id,
+                "username": auth_id,  # will be overridden by HA using existing username
+                "password": password
+            })
+            # If credentials already exist, change them instead
+            if resp and not resp.get('success'):
+                err_code = resp.get('error', {}).get('code', '') if resp else ''
+                if 'already_exists' in str(err_code) or 'not_found' not in str(err_code):
+                    # Try admin_change_password
+                    resp2 = self.ha_connection.SendAndReceiveMsg({
+                        "type": "config/auth_provider/homeassistant/change_password",
+                        "user_id": auth_id,
+                        "password": password
+                    })
+                    if not resp2 or not resp2.get('success'):
+                        # Final fallback: admin override
+                        resp2 = self.ha_connection.SendAndReceiveMsg({
+                            "type": "auth/admin_change_password",
+                            "user_id": auth_id,
+                            "password": password
+                        })
+                    resp = resp2
+
+            if not resp or not resp.get('success'):
+                err_msg = resp.get('error', {}).get('message', 'Unknown') if resp else 'Timeout'
+                raise Exception(f"HA password set failed: {err_msg}")
+
+            self.logger.info(f"[CloudWorker] Password set successfully for {auth_id}")
+            self.sio.emit('command_generate_password_result', {'reqId': req_id, 'success': True})
+        except Exception as e:
+            self.logger.error(f"[CloudWorker] _on_generate_password error: {e}")
+            self.sio.emit('command_generate_password_result', {'reqId': req_id, 'success': False, 'error': str(e)})
 
     def _run_loop(self):
         cloud_url = "https://sweetplace-starthere.up.railway.app"
