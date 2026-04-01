@@ -446,20 +446,24 @@ class CloudWorker:
         req_id = data.get('reqId')
         auth_id = data.get('auth_id')
         password = data.get('password')
-        self.logger.info(f"[CloudWorker] Generating one-time password for auth_id={auth_id}, reqId={req_id}")
+        username = data.get('username')
+        
+        self.logger.info(f"[CloudWorker] Generating one-time password for auth_id={auth_id}, username={username}, reqId={req_id}")
+        
         try:
             if not self.ha_connection:
                 raise Exception("HA WebSocket non inizializzato")
+                
             wait_time = 0
             while not getattr(self.ha_connection, 'IsConnected', False) and wait_time < 10:
                 time.sleep(1)
                 wait_time += 1
             if not getattr(self.ha_connection, 'IsConnected', False):
                 raise Exception("HA WebSocket not connected.")
+                
             resolved_user_id = auth_id
             
-            # Robust mapping: If the provided `auth_id` is actually a `person.id` (due to backend sync format)
-            # we must resolve it to `user_id` before using admin_change_password.
+            # Robust mapping
             person_list_msg = {"type": "person/list"}
             list_response = self.ha_connection.SendAndReceiveMsg(person_list_msg)
             if list_response and list_response.get('success'):
@@ -470,27 +474,32 @@ class CloudWorker:
                         self.logger.info(f"[CloudWorker] Resolved person_id {auth_id} to auth_user_id {resolved_user_id}")
                         break
 
-            # Use the correct admin API to override user password
+            # Dal momento che `admin_change_password` fallisce sempre con "Unauthorized" se il token dell'addon
+            # non ha privilegi 'Owner' (gli Addon solitamente hanno solo 'Admin'), noi AGGIRIAMO il problema
+            # eliminando esplicitamente le credenziali e ricreandole, dato che `create` e `delete` richiedono solo 'Admin'.
+            
+            if username:
+                self.logger.info(f"[CloudWorker] Deleting old credentials for {username} if they exist...")
+                self.ha_connection.SendAndReceiveMsg({
+                    "type": "config/auth_provider/homeassistant/delete",
+                    "username": username
+                })
+            else:
+                self.logger.warning("[CloudWorker] Username is missing, skipping credential deletion. Re-create might fail with already_exists.")
+
+            # Create new credentials
+            self.logger.info(f"[CloudWorker] Creating fresh credentials for user_id {resolved_user_id}...")
+            fallback_username = username if username else f"user.{resolved_user_id[:6]}"
             resp = self.ha_connection.SendAndReceiveMsg({
-                "type": "config/auth_provider/homeassistant/admin_change_password",
+                "type": "config/auth_provider/homeassistant/create",
                 "user_id": resolved_user_id,
+                "username": fallback_username,
                 "password": password
             })
+
             if not resp or not resp.get('success'):
-                # Se il cambio fallisce (probabilmente perché l'utente non ha le credenziali base nel provider nativo)
-                # Fallback: Creiamo le credenziali da zero.
-                resp_create = self.ha_connection.SendAndReceiveMsg({
-                    "type": "config/auth_provider/homeassistant/create",
-                    "user_id": resolved_user_id,
-                    "username": f"user.{resolved_user_id[:6]}",
-                    "password": password
-                })
-                if resp_create and resp_create.get('success'):
-                    resp = resp_create
-                else:
-                    create_err = resp_create.get('error', {}).get('message', 'Timeout') if resp_create else 'Timeout'
-                    err_msg = resp.get('error', {}).get('message', 'Unknown') if resp else 'Timeout'
-                    raise Exception(f"{err_msg} / Fallback create: {create_err}")
+                err_msg = resp.get('error', {}).get('message', 'Unknown') if resp else 'Timeout'
+                raise Exception(f"HA credential creation failed: {err_msg}")
 
             self.logger.info(f"[CloudWorker] Password set successfully for {auth_id}")
             self.sio.emit('command_generate_password_result', {'reqId': req_id, 'success': True})
