@@ -1,7 +1,21 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 <!-- This is used in the sweetplace UI to show updates, so keep it up to date. -->
 
-## 2.6.0 - 2.6.6
+## 2.7.27
+
+- 🔑 Nuovo wizard di invito utente a 3 step: scarica app, configura URL/username, genera password monouso.
+- 🔒 La password viene generata on-demand al passo 3 e non viene mai salvata in memoria o nel database.
+- 🔗 Il link di invito è valido 48 ore e si disattiva automaticamente dopo il primo utilizzo.
+- ⚙️ Aggiunta chiamata HA `config/auth_provider/homeassistant/create` e fallback a `change_password` per impostare le credenziali del nuovo utente.
+
+## 2.7.26
+
+- 🏠 Persistenza sessione wizard: il token viene salvato in `localStorage` per non tornare allo step 1 dopo un refresh.
+- ⚠️ Errori di connessione Home Assistant mostrati in forma soft con pulsante "Riprova" invece di alert aggressivi.
+- 🗺️ Coordinate GPS visualizzate con 7 decimali nel footer della dashboard.
+- 🎨 Miglioramenti UI: font label step uniformati, testo descrizione su due righe, overlay di caricamento con spinner durante creazione/aggiornamento utenti, pulsante "Annulla" al posto della X.
+- 📍 Geolocalizzazione: lat/lon scritti in `kasa-gps.yaml` e `appdaem-gps.yaml` (non in `configuration.yaml`).
+
 
 - 📺 [Adding free WebRTC support!](https://blog.sweetplace.me/free-webrtc-video-streaming-for-home-assistant/)
     - [Checkout our launch blog post for details.](https://blog.sweetplace.me/free-webrtc-video-streaming-for-home-assistant/)
