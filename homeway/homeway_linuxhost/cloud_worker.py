@@ -456,10 +456,24 @@ class CloudWorker:
                 wait_time += 1
             if not getattr(self.ha_connection, 'IsConnected', False):
                 raise Exception("HA WebSocket not connected.")
+            resolved_user_id = auth_id
+            
+            # Robust mapping: If the provided `auth_id` is actually a `person.id` (due to backend sync format)
+            # we must resolve it to `user_id` before using admin_change_password.
+            person_list_msg = {"type": "person/list"}
+            list_response = self.ha_connection.SendAndReceiveMsg(person_list_msg)
+            if list_response and list_response.get('success'):
+                persons = list_response.get('result', {}).get('persons', [])
+                for p in persons:
+                    if p.get('id') == auth_id and p.get('user_id'):
+                        resolved_user_id = p.get('user_id')
+                        self.logger.info(f"[CloudWorker] Resolved person_id {auth_id} to auth_user_id {resolved_user_id}")
+                        break
+
             # Use the correct admin API to override user password
             resp = self.ha_connection.SendAndReceiveMsg({
                 "type": "config/auth_provider/homeassistant/admin_change_password",
-                "user_id": auth_id,
+                "user_id": resolved_user_id,
                 "password": password
             })
             if not resp or not resp.get('success'):
