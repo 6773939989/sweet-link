@@ -1,4 +1,4 @@
-<h1 align="center" style="margin-bottom:20px">Sweet-Link (Homeway.io Fork)</h1>
+<h1 align="left" style="margin-bottom:20px">Sweet-Link (Homeway.io Fork)</h1>
 
 Sweet-Link is a custom fork of the official [Homeway.io](https://homeway.io) Home Assistant Add-on, tailored specifically for the Sweetplace ecosystem. 
 
