@@ -456,22 +456,12 @@ class CloudWorker:
                 wait_time += 1
             if not getattr(self.ha_connection, 'IsConnected', False):
                 raise Exception("HA WebSocket not connected.")
-
-            # Try standard change password API for the local auth provider
+            # Use the correct admin API to override user password
             resp = self.ha_connection.SendAndReceiveMsg({
-                "type": "config/auth_provider/homeassistant/change_password",
+                "type": "config/auth_provider/homeassistant/admin_change_password",
                 "user_id": auth_id,
                 "password": password
             })
-            
-            # If it fails, fallback to admin change password
-            if not resp or not resp.get('success'):
-                resp = self.ha_connection.SendAndReceiveMsg({
-                    "type": "auth/admin_change_password",
-                    "user_id": auth_id,
-                    "password": password
-                })
-
             if not resp or not resp.get('success'):
                 err_msg = resp.get('error', {}).get('message', 'Unknown') if resp else 'Timeout'
                 raise Exception(f"HA password set failed: {err_msg}")
