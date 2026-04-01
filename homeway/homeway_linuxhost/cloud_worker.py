@@ -477,8 +477,20 @@ class CloudWorker:
                 "password": password
             })
             if not resp or not resp.get('success'):
-                err_msg = resp.get('error', {}).get('message', 'Unknown') if resp else 'Timeout'
-                raise Exception(f"HA password set failed: {err_msg}")
+                # Se il cambio fallisce (probabilmente perché l'utente non ha le credenziali base nel provider nativo)
+                # Fallback: Creiamo le credenziali da zero.
+                resp_create = self.ha_connection.SendAndReceiveMsg({
+                    "type": "config/auth_provider/homeassistant/create",
+                    "user_id": resolved_user_id,
+                    "username": f"user.{resolved_user_id[:6]}",
+                    "password": password
+                })
+                if resp_create and resp_create.get('success'):
+                    resp = resp_create
+                else:
+                    create_err = resp_create.get('error', {}).get('message', 'Timeout') if resp_create else 'Timeout'
+                    err_msg = resp.get('error', {}).get('message', 'Unknown') if resp else 'Timeout'
+                    raise Exception(f"{err_msg} / Fallback create: {create_err}")
 
             self.logger.info(f"[CloudWorker] Password set successfully for {auth_id}")
             self.sio.emit('command_generate_password_result', {'reqId': req_id, 'success': True})
