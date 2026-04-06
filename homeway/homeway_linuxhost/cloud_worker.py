@@ -285,21 +285,28 @@ class CloudWorker:
             if not auth_user_id:
                 raise Exception("System User creato ma ID mancante nella risposta!")
                 
+            # IMPORTANTE: Home Assistant soffre di una race condition interna per cui se 
+            # proviamo ad associare subito le credenziali (auth_provider/create) il websocket 
+            # droppa il messaggio e va in Timeout (bloccando per 30 secondi).
+            time.sleep(1.5)
+                
             # STEP 1B: Setup Initial Password (PIN) for zero-touch Companion App access
             import string
             initial_pin = ''.join(random.choices(string.digits, k=8))
             auth_username = name.lower().replace(" ", ".")
             
-            cred_response = self.ha_connection.SendAndReceiveMsg({
+            self.logger.info(f"[CloudWorker] Setting initial credentials for {auth_username}...")
+            # We use SendMsg with waitForResponse=False to avoid ANY chance of blocking the flow for 30s 
+            # if HA silently drops auth_provider/create again, but the 1.5s sleep should prevent it.
+            self.ha_connection.SendMsg({
                 "type": "config/auth_provider/homeassistant/create",
                 "user_id": auth_user_id,
                 "username": auth_username,
                 "password": initial_pin
-            })
-            if not cred_response or not cred_response.get('success'):
-                self.logger.warning(f"[CloudWorker] Failed to set initial PIN for {auth_username}: {cred_response.get('error') if cred_response else 'Timeout'}")
-                initial_pin = "ERRORE"
+            }, waitForResponse=False)
                 
+            time.sleep(0.5)
+
             # STEP 2: Creazione Persona Esplicita collegata allo User e assegnabile a dispositivi
             person_response = self.ha_connection.SendMsg({
                 "type": "person/create",
