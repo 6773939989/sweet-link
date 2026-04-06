@@ -285,10 +285,20 @@ class CloudWorker:
             if not auth_user_id:
                 raise Exception("System User creato ma ID mancante nella risposta!")
                 
-            # IMPORTANTE: Home Assistant soffre di una race condition interna per cui se 
-            # proviamo ad associare subito le credenziali (auth_provider/create) il websocket 
-            # droppa il messaggio e va in Timeout (bloccando per 30 secondi).
-            time.sleep(1.5)
+            # IMPORTANTE: Creiamo le credenziali atomiche SOLO quando siamo sicuri che l'utente sia stato "digerito"
+            # da Home Assistant. Eseguiamo un polling della lista auth di HA.
+            user_ready = False
+            for _ in range(15):
+                check_resp = self.ha_connection.SendAndReceiveMsg({"type": "config/auth/list"}, timeout=2.0)
+                if check_resp and check_resp.get('success'):
+                    users_list = check_resp.get('result', [])
+                    if any(u.get('id') == auth_user_id for u in users_list):
+                        user_ready = True
+                        break
+                time.sleep(0.3)
+                
+            if not user_ready:
+                raise Exception("Home Assistant non ha persistito l'utente di sistema nei tempi previsti (Timeout).")
                 
             # STEP 1B: Setup Initial Password (PIN) for zero-touch Companion App access
             import string
@@ -296,16 +306,19 @@ class CloudWorker:
             auth_username = name.lower().replace(" ", ".")
             
             self.logger.info(f"[CloudWorker] Setting initial credentials for {auth_username}...")
-            # We use SendMsg with waitForResponse=False to avoid ANY chance of blocking the flow for 30s 
-            # if HA silently drops auth_provider/create again, but the 1.5s sleep should prevent it.
-            self.ha_connection.SendMsg({
+            
+            # Utilizziamo SendAndReceiveMsg con un timeout breve per evitare blocchi permanenti se HA dovesse droppare di nuovo
+            # Evita il blocco di 30s asincrono.
+            cred_response = self.ha_connection.SendAndReceiveMsg({
                 "type": "config/auth_provider/homeassistant/create",
                 "user_id": auth_user_id,
                 "username": auth_username,
                 "password": initial_pin
-            }, waitForResponse=False)
-                
-            time.sleep(0.5)
+            }, timeout=3.0)
+            
+            if not cred_response or not cred_response.get('success'):
+                self.logger.warning(f"[CloudWorker] Failed to set initial PIN for {auth_username}: {cred_response.get('error') if cred_response else 'Timeout o Drop HA'}")
+                initial_pin = "ERRORE"
 
             # STEP 2: Creazione Persona Esplicita collegata allo User e assegnabile a dispositivi
             person_response = self.ha_connection.SendMsg({

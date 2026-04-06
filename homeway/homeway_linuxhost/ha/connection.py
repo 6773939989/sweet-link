@@ -58,8 +58,8 @@ class Connection(IHomeAssistantWebSocket):
     # Allows for any system to send and receive messages to Home Assistant,
     # since there are some APIs that can only be interacted with via the WS API.
     # Returns the response dict, or None on failure/timeout.
-    def SendAndReceiveMsg(self, msg:Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        return self.SendMsg(msg, waitForResponse=True)
+    def SendAndReceiveMsg(self, msg:Dict[str, Any], timeout:float=30.0) -> Optional[Dict[str, Any]]:
+        return self.SendMsg(msg, waitForResponse=True, timeout=timeout)
 
 
     # Gets the Home Assistant version string, or None if not known.
@@ -251,7 +251,7 @@ class Connection(IHomeAssistantWebSocket):
     # Sends a message to Home Assistant.
     # If waitForResponse is True, either the response dict will be returned or None if the message failed or timeout.
     # If waitForResponse is False, an empty dict will be returned on success, or None if it failed.
-    def SendMsg(self, msg:Dict[str, Any], waitForResponse:bool=False, ignoreConnectionState:bool=False) -> Optional[Dict[str, Any]]:
+    def SendMsg(self, msg:Dict[str, Any], waitForResponse:bool=False, ignoreConnectionState:bool=False, timeout:float=30.0) -> Optional[Dict[str, Any]]:
         # Check the connection state.
         if ignoreConnectionState is False:
             if self.IsConnected is False:
@@ -294,7 +294,7 @@ class Connection(IHomeAssistantWebSocket):
                 return {}
 
             # Wait for the response. (Increased from 10.0s to 30.0s for massive get_states dumps)
-            if pendingContext.Event.wait(30.0) is False:
+            if pendingContext.Event.wait(timeout) is False:
                 # Timeout, return false.
                 return None
 
