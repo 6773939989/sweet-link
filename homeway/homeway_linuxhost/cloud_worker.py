@@ -317,8 +317,9 @@ class CloudWorker:
             }, timeout=3.0)
             
             if not cred_response or not cred_response.get('success'):
-                self.logger.warning(f"[CloudWorker] Failed to set initial PIN for {auth_username}: {cred_response.get('error') if cred_response else 'Timeout o Drop HA'}")
-                initial_pin = "ERRORE"
+                err_msg = cred_response.get('error', {}).get('message', 'Timeout o Drop HA') if cred_response else 'Timeout'
+                self.logger.error(f"[CloudWorker] Failed to set initial PIN for {auth_username}: {err_msg}")
+                raise Exception(f"Impossibile creare le credenziali utente HA: {err_msg}")
 
             # STEP 2: Creazione Persona Esplicita collegata allo User e assegnabile a dispositivi
             person_response = self.ha_connection.SendMsg({
@@ -483,15 +484,18 @@ class CloudWorker:
                 
             resolved_user_id = auth_id
             
-            # Robust mapping
-            person_list_msg = {"type": "person/list"}
-            list_response = self.ha_connection.SendAndReceiveMsg(person_list_msg)
+            # Robust mapping via config/auth/list (person/list is not a valid HA WS command, it caused silent fallback to person_id!)
+            auth_list_msg = {"type": "config/auth/list"}
+            list_response = self.ha_connection.SendAndReceiveMsg(auth_list_msg)
             if list_response and list_response.get('success'):
-                persons = list_response.get('result', {}).get('persons', [])
-                for p in persons:
-                    if p.get('id') == auth_id and p.get('user_id'):
-                        resolved_user_id = p.get('user_id')
-                        self.logger.info(f"[CloudWorker] Resolved person_id {auth_id} to auth_user_id {resolved_user_id}")
+                users = list_response.get('result', [])
+                for u in users:
+                    u_name = u.get('name', '').lower().replace(' ', '.')
+                    target = username.lower().replace('_', '.') if username else ""
+                    # Match by name slug or direct ID fallback
+                    if (target and u_name == target) or u.get('id') == auth_id:
+                        resolved_user_id = u.get('id')
+                        self.logger.info(f"[CloudWorker] Successfully mapped username/auth_id to auth_user_id: {resolved_user_id}")
                         break
 
             # Dal momento che `admin_change_password` fallisce sempre con "Unauthorized" se il token dell'addon
