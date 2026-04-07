@@ -76,7 +76,7 @@ class LinuxHost(IStateChangeHandler):
         # Do all of this in a try catch, so we can log any issues before exiting
         try:
             self.Logger.info("##################################")
-            self.Logger.info("#### Homeway Plugin Starting #####")
+            self.Logger.info("#### Sweetplace addon starting... #####")
             self.Logger.info("##################################")
 
             # Find the version of the plugin, this is required and it will throw if it fails.
@@ -411,11 +411,7 @@ class LinuxHost(IStateChangeHandler):
         if hasConnectedAccount is False:
             self.Logger.info("")
             self.Logger.info("")
-            self.Logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-            self.Logger.info("              This Add-On Isn't Connected To Homeway!             ")
-            self.Logger.info("             Use this link to finish the add-on setup:            ")
-            self.Logger.info(" %s", HostCommon.GetAddPluginUrl(pluginId ))
-            self.Logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+            self.Logger.info("[INFO] - Addon Hardware ID: %s", pluginId)
             self.Logger.info("")
             self.Logger.info("")
 
