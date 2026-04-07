@@ -57,6 +57,8 @@ class HomeContext(IHomeContext):
         self.EventHandler.SetHomeContextCallback(self._OnStateChangedCallback)
         self.EventHandler.SetHomeContext(self)
 
+        self._InitYamlWatcherThread()
+
         # Setup the worker thread
         self.WorkerGoEvent = threading.Event()
         self.WorkerThread = threading.Thread(target=self._Worker)
@@ -226,14 +228,7 @@ class HomeContext(IHomeContext):
         filterList = None
         
         filename = f"{assistant_type}.yaml"
-        # Since we run inside the HA addon container, /config is mapped to /homeassistant
-        configPath = f"/homeassistant/sweetplace/haconfig/this-home/vocal_assistants/{filename}"
-        
-        # Fallback for standalone outside docker 
-        if not os.path.exists(configPath):
-            configPath = f"/home/homeassistant/.homeassistant/sweetplace/haconfig/this-home/vocal_assistants/{filename}"
-            if not os.path.exists(configPath):
-                configPath = f"/config/sweetplace/haconfig/this-home/vocal_assistants/{filename}"
+        configPath = self._GetSweetplaceYamlPath(assistant_type)
             
         if os.path.exists(configPath):
             try:
@@ -253,10 +248,61 @@ class HomeContext(IHomeContext):
         self._SweetplaceMultiCacheList[assistant_type] = filterList
         return filterList
 
+    def _InitYamlWatcherThread(self):
+        self._LastYamlMTimes = {"alexa": 0, "google_assistant": 0}
+        self._YamlWatcherThread = threading.Thread(target=self._YamlWatcherLoop, daemon=True)
+        self._YamlWatcherThread.start()
+
+    def _GetSweetplaceYamlPath(self, assistant_type:str) -> str:
+        filename = f"{assistant_type}.yaml"
+        configPath = f"/homeassistant/sweetplace/haconfig/this-home/vocal_assistants/{filename}"
+        if not os.path.exists(configPath):
+            configPath = f"/home/homeassistant/.homeassistant/sweetplace/haconfig/this-home/vocal_assistants/{filename}"
+            if not os.path.exists(configPath):
+                configPath = f"/config/sweetplace/haconfig/this-home/vocal_assistants/{filename}"
+        return configPath
+
+    def _YamlWatcherLoop(self):
+        # Allow the system to settle before checking
+        time.sleep(10)
+        while True:
+            try:
+                changed = False
+                for t in ["alexa", "google_assistant"]:
+                    path = self._GetSweetplaceYamlPath(t)
+                    if os.path.exists(path):
+                        mtime = os.path.getmtime(path)
+                        if self._LastYamlMTimes[t] != 0 and mtime > self._LastYamlMTimes[t]:
+                            self.Logger.info(f"Rilevata modifica al file {path}. Disvalido chache yaml e scateno resync.")
+                            # Force cache invalidation immediately for this assistant
+                            if hasattr(self, "_SweetplaceMultiCacheTime"):
+                                self._SweetplaceMultiCacheTime[t] = 0
+                            changed = True
+                        self._LastYamlMTimes[t] = mtime
+                    else:
+                        self._LastYamlMTimes[t] = 0
+                        
+                if changed:
+                    # Invalidate homeway inner device cache, trigger re-evaluation of exposed entities
+                    self.WorkerGoEvent.set()
+                
+            except Exception as e:
+                self.Logger.error(f"Error in Sweetplace Yaml Watcher Loop: {e}")
+            # Poll every 10 seconds
+            time.sleep(10)
+
+
     # Given a device or entity dict and assistant types, this returns true or false if it's exposed or not.
     # If multiple assistants are checked, only one must be exposed to return true.
     def IsExposeToAssistant(self, obj:Dict[str, Any], checkAlexa:bool=False, checkGoogle:bool=False, checkSage:bool=False) -> bool:
-        # Check Sweetplace Multi-YAML Filter first
+        options = obj.get("options", None)
+
+        if checkSage:
+            # Per l'assistente locale Sage, si continua ad usare il toggle "conversation.should_expose"
+            if options is not None and options.get("conversation", {}).get("should_expose", False) is True:
+                return True
+
+        # Per Alexa e Google, INFORZIAMO la lettura via YAML, IGNORANDO i toggle nativi "cloud.alexa"
         target_assistant = None
         if checkAlexa:
             target_assistant = "alexa"
@@ -265,29 +311,17 @@ class HomeContext(IHomeContext):
             
         if target_assistant is not None:
             sweetFilter = self._GetSweetplaceFilterList_Multi(target_assistant)
-            if sweetFilter is not None:
-                entity_id = obj.get("entity_id", None)
-                if entity_id in sweetFilter:
-                    return True
-                return False # Strictly block anything not in the list!
+            
+            # Se la lista yaml non esiste, blocchiamo categoricamente tutto
+            if sweetFilter is None:
+                return False
+                
+            entity_id = obj.get("entity_id", None)
+            if entity_id in sweetFilter:
+                return True
+            return False # Strictly block anything not in the list!
 
-        # We check the options field for the relevant flags.
-        # If if the field is missing, HA defines that as NOT being exposed, we tested this to be sure this is the correct behavior.
-        options = obj.get("options", None)
-        if options is None:
-            # If there are no options, it's not exposed.
-            return False
-        if checkSage:
-            # This is what HA uses to toggle on and off the exposure to the assist agents.
-            if options.get("conversation", {}).get("should_expose", False) is True:
-                return True
-        if checkAlexa:
-            if options.get("cloud.alexa", {}).get("should_expose", False) is True:
-                return True
-        if checkGoogle:
-            if options.get("cloud.google_assistant", {}).get("should_expose", False) is True:
-                return True
-        # Default to false if the options don't exist or they are false.
+        # Se ci si arriva in caso né Sage, né Alexa, né Google (non dovrebbe accadere), si blocca.
         return False
 
 
