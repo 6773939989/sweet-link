@@ -75,9 +75,7 @@ class LinuxHost(IStateChangeHandler):
     def RunBlocking(self, storageDir:str, versionFileDir:str, devConfig:Optional[Dict[str,Any]]):
         # Do all of this in a try catch, so we can log any issues before exiting
         try:
-            self.Logger.info("##################################")
-            self.Logger.info("#### Sweetplace addon starting... #####")
-            self.Logger.info("##################################")
+            self.Logger.info("Sweetplace addon starting...")
 
             # Find the version of the plugin, this is required and it will throw if it fails.
             pluginVersionStr = Version.GetPluginVersion(versionFileDir)
@@ -409,11 +407,7 @@ class LinuxHost(IStateChangeHandler):
         # Check if this plugin is unlinked, if so add a message to the log to help the user setup the plugin if desired.
         # This would be if the skipped the plugin link or missed it in the setup script.
         if hasConnectedAccount is False:
-            self.Logger.info("")
-            self.Logger.info("")
-            self.Logger.info("[INFO] - Addon Hardware ID: %s", pluginId)
-            self.Logger.info("")
-            self.Logger.info("")
+            self.Logger.info("Addon Hardware ID: %s", pluginId)
 
 
     #
