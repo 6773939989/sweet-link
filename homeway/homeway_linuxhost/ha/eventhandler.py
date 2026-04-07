@@ -227,14 +227,20 @@ class EventHandler:
         # Check if this is not a removal.
         if newState_CanBeNone is not None:
             if self.HomeContext is not None:
+                # We check exposure FIRST using a mock dict with just the entityId.
+                # This prevents lookup storms for the 99% of entities that aren't exposed anyway.
+                mockEntityDict = {"entity_id": entityId}
+                isUpdateForAlexa  = self.HomeContext.IsExposeToAssistant(mockEntityDict, checkAlexa=True)
+                isUpdateForGoogle = self.HomeContext.IsExposeToAssistant(mockEntityDict, checkGoogle=True)
+                
+                if isUpdateForAlexa is False and isUpdateForGoogle is False:
+                    # Not exposed to either assistant, we ignore this event.
+                    return
+
+                # It IS exposed. Now fetch the full dict to check if it's disabled.
                 # Note this CAN NOT force a refresh or it will cause a storm if a lot of events come in.
                 fullEntityDict = self.HomeContext.GetEntityById(entityId, forceRefresh=False)
                 if fullEntityDict is not None:
-                    isUpdateForAlexa  = self.HomeContext.IsExposeToAssistant(fullEntityDict, checkAlexa=True)
-                    isUpdateForGoogle = self.HomeContext.IsExposeToAssistant(fullEntityDict, checkGoogle=True)
-                    if isUpdateForAlexa is False and isUpdateForGoogle is False:
-                        # Not exposed to either assistant, we ignore this event.
-                        return
                     # Also check if it's disabled.
                     if self.HomeContext.IsDisabled(fullEntityDict):
                         # Disabled, we ignore this event.
