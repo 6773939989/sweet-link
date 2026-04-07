@@ -71,8 +71,7 @@ class CloudWorker:
         """
         Receives: { lat: float, lon: float, display: str, plugin_id: str }
         1. Calls HA WebSocket API config/core/update (live, no restart)
-        2. Writes /homeassistant/kasa-gps.yaml   (zone: Home coords)
-        3. Writes /homeassistant/appdaem-gps.yaml (AppDaemon coords)
+        2. Writes /homeassistant/home-zone.yaml   (zone: Home coords)
         """
         lat = data.get('lat')
         lon = data.get('lon')
@@ -105,45 +104,25 @@ class CloudWorker:
             self.logger.error(f"[CloudWorker] HA WS location error: {e}")
             errors.append(str(e))
 
-        # 2 — Write /homeassistant/kasa-gps.yaml
-        # This file holds the zone: Home coordinates for configuration.yaml !include
+        # 2 — Write /homeassistant/home-zone.yaml
         try:
-            kasa_path = "/homeassistant/kasa-gps.yaml"
+            kasa_path = "/homeassistant/home-zone.yaml"
             kasa_content = (
                 f"# Sweetplace auto-generated — NON MODIFICARE MANUALMENTE\n"
                 f"# Questa è la zona Home/Casa di default.\n"
                 f"# Non rinominare 'Home': è usato da HA per la rilevazione presenza.\n"
-                f"zone:\n"
-                f"  name: Home\n"
-                f"  # Coordinate aggiornate automaticamente da Sweetplace Onboarding\n"
-                f"  latitude: {lat}\n"
-                f"  longitude: {lon}\n"
-                f"  radius: 10\n"
-                f"  icon: mdi:home\n"
+                f"name: Home\n"
+                f"# Coordinate aggiornate automaticamente da Sweetplace Onboarding\n"
+                f"latitude: {lat}\n"
+                f"longitude: {lon}\n"
+                f"radius: 10\n"
+                f"icon: mdi:home\n"
             )
             with open(kasa_path, 'w') as f:
                 f.write(kasa_content)
-            self.logger.info(f"[CloudWorker] kasa-gps.yaml written: lat={lat}, lon={lon}")
+            self.logger.info(f"[CloudWorker] home-zone.yaml written: lat={lat}, lon={lon}")
         except Exception as e:
-            self.logger.error(f"[CloudWorker] kasa-gps.yaml write error: {e}")
-            errors.append(str(e))
-
-        # 3 — Write /homeassistant/appdaem-gps.yaml
-        # AppDaemon reads these coordinates for presence-based automations
-        try:
-            appdaem_path = "/homeassistant/appdaem-gps.yaml"
-            appdaem_content = (
-                f"# Sweetplace auto-generated — NON MODIFICARE MANUALMENTE\n"
-                f"# Coordinate GPS della casa per AppDaemon.\n"
-                f"# Usate dalle app di presenza e automazioni geo-localizzate.\n"
-                f"latitude: {lat}\n"
-                f"longitude: {lon}\n"
-            )
-            with open(appdaem_path, 'w') as f:
-                f.write(appdaem_content)
-            self.logger.info(f"[CloudWorker] appdaem-gps.yaml written: lat={lat}, lon={lon}")
-        except Exception as e:
-            self.logger.error(f"[CloudWorker] appdaem-gps.yaml write error: {e}")
+            self.logger.error(f"[CloudWorker] home-zone.yaml write error: {e}")
             errors.append(str(e))
 
         # Ack to backend
